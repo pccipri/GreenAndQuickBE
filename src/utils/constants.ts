@@ -1,0 +1,13 @@
+export enum USER_ROLES {
+  'CUSTOMER',
+  'EMPLOYEE',
+  'ADMIN',
+}
+
+export enum ORDER_STATUSES {
+  'RECEIVED',
+  'PREPARING',
+  'READYFORDELIVERY',
+  'DELIVERED',
+  'CANCELLED',
+}

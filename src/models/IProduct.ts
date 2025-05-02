@@ -1,4 +1,4 @@
-import FileDetails from "./FileDetails";
+import FileDetails from "./generic/FileDetails";
 import ICategory from "./ICategory";
 
 export default interface IProduct<PlaceholderCategory = string | ICategory> {
