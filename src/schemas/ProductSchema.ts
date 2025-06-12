@@ -1,23 +1,54 @@
-import mongoose from 'mongoose';
-import IProduct from '../models/IProduct';
-import ICategory from '../models/ICategory';
+import mongoose, { Types } from 'mongoose';
 const { Schema } = mongoose;
 
-export interface ProductDocument extends Omit<Document, 'location'>, IProduct<string | ICategory> {}
+export interface ProductDocument extends Document {
+  shop: Types.ObjectId;
+  name: string;
+  description: string;
+  imageUrl: string;
+  price: number;
+  reducedPrice?: number;
+  stock: number;
+  category: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 const productSchema = new Schema<ProductDocument>({
-  name: { type: String, required: true },
-  image: {
-    fileType: { type: String },
-    fileName: { type: String },
-    size: { type: Number },
-    data: { type: Buffer },
+  shop: {
+    type: Schema.Types.ObjectId,
+    ref: 'Shop',
+    required: true,
   },
-  price: { type: Number, required: true },
-  reducedPrice: { type: Number, default: null },
-  // TO-DO: To be replaced after the locations feature is implemented
-  location: { type: String, default: null },
-  category: { type: Schema.Types.ObjectId, ref: "Category", required: true },
-});
-
-export const Product = mongoose.model('Product', productSchema);
+  name: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
+    required: true,
+  },
+  imageUrl: {
+    type: String,
+    required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+  },
+  reducedPrice: {
+    type: Number,
+    default: null,
+  },
+  stock: {
+    type: Number,
+    required: true,
+    default: 0,
+  },
+  category: {
+    type: Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  },
+}, { timestamps: true });
+export const Product = mongoose.model<ProductDocument>('Product', productSchema);

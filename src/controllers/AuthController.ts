@@ -26,7 +26,7 @@ router.post('/login', (req, res, next) => {
   // Check if the user is already authenticated
   if (req.isAuthenticated()) {
     // If the user is already authenticated, return an error response
-    return res.status(400).json({ error: 'User is already logged in.' })
+    res.status(400).json({ error: 'User is already logged in.' })
   }
 
   // If the user is not already authenticated, proceed with the authentication process

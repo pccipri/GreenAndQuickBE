@@ -1,12 +1,15 @@
 import IAddress from './IAddress';
 
 export default interface IUser {
-  accountType: string;
+  _id: string;
   username: string;
-  password: string;
   email: string;
+  password: string;
+  role: 'user' | 'admin' | 'shopOwner';
   firstName: string;
   lastName: string;
-  phoneNumber: string;
   addresses: IAddress[];
+  createdAt: Date;
+  updatedAt: Date;
+  phoneNumber: string;
 }

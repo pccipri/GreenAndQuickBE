@@ -1,21 +1,16 @@
 import mongoose from 'mongoose';
-import ICategory from '../models/ICategory';
 const { Schema } = mongoose;
 
-export interface CategoryDocument extends Document, ICategory {}
+export interface CategoryDocument extends Document {
+  name: string;
+  isGlobal: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const categorySchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  image: {
-    fileType: { type: String },
-    fileName: { type: String },
-    size: { type: Number },
-    data: { type: Buffer },
-  },
-});
+const categorySchema = new Schema<CategoryDocument>({
+  name: { type: String, required: true, unique: true },
+  isGlobal: { type: Boolean, default: false }
+}, { timestamps: true });
 
-export const Category = mongoose.model('Category', categorySchema);
+export const Category = mongoose.model<CategoryDocument>('Category', categorySchema);

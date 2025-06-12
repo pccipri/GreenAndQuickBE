@@ -1,6 +1,7 @@
-import FileDetails from "./FileDetails";
-
 export default interface ICategory {
+  _id: string;
   name: string;
-  image: FileDetails;
+  isGlobal: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }

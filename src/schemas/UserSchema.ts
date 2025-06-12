@@ -1,59 +1,30 @@
 import mongoose, { Document } from 'mongoose';
-import IAddress from '../models/IAddress';
 import { USER_ROLES } from '../utils/constants';
-const { Schema } = mongoose;
+import { addressSchema } from './AddressSchema';
 
+const { Schema } = mongoose;
 export interface UserDocument extends Document {
-  accountType: string;
   username: string;
-  password: string;
   email: string;
+  password: string;
+  role: 'user' | 'admin' | 'shopOwner';
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  addresses: IAddress[];
+  addresses: typeof addressSchema[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-const userSchema = new Schema({
-  accountType: {
-    type: String,
-    enum: USER_ROLES,
-    required: true,
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  firstName: {
-    type: String,
-  },
-  lastName: {
-    type: String,
-  },
-  phoneNumber: {
-    type: String,
-  },
-  addresses: [
-    {
-      street: { type: String },
-      city: { type: String },
-      county: { type: String },
-      country: { type: String },
-      zipcode: { type: String },
-      isDefault: { type: Number },
-    },
-  ],
-});
+const userSchema = new Schema<UserDocument>({
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true, trim: true },
+  password: { type: String, required: true },
+  role: { type: String, enum: ['user', 'admin', 'shopOwner'], required: true },
+  firstName: { type: String },
+  lastName: { type: String },
+  phoneNumber: { type: String },
+  addresses: [addressSchema]
+}, { timestamps: true });
 
-export const User = mongoose.model('User', userSchema);
+export const User = mongoose.model<UserDocument>('User', userSchema);

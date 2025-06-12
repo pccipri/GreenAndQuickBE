@@ -2,6 +2,7 @@ import express from 'express';
 import CategoryController from '../controllers/CategoryController';
 import AuthController from '../controllers/AuthController';
 import UserController from '../controllers/UserController';
+import FavouriteController from '../controllers/FavouriteController';
 
 const apiController = express.Router();
 
@@ -9,5 +10,6 @@ const apiController = express.Router();
 apiController.use('/category', CategoryController);
 apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
+apiController.use('./favourite', FavouriteController)
 
 export default apiController;

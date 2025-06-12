@@ -1,50 +1,28 @@
 import ICategory from "../models/ICategory"
 import { Category } from "../schemas/CategorySchema"
 
-
-
-// Create a new category
 export const createCategory = async (categoryToSave: ICategory) => {
-  const newCategory = new Category(categoryToSave)
-  const response = await newCategory.save()
+  const newCategory = new Category(categoryToSave);
+  const response = await newCategory.save();
+  return response._id;
+};
 
-  if (response) {
-    return true
-  }
-
-  return false
-}
-
-// Get all categories
 export const getAllCategories = async () => {
-  const categories = await Category.find()
-  return categories.map(category => category.toJSON())
-}
+  const categories = await Category.find();
+  return categories;
+};
 
-// Get a single category by ID
 export const getCategoryById = async (id: string) => {
-  const category = await Category.findById(id)
+  const category = await Category.findById(id);
+  return category || null;
+};
 
-  if (!category) {
-    return false
-  }
+export const updateCategory = async (id: string, modifiedCategory: Partial<ICategory>) => {
+  const updated = await Category.findByIdAndUpdate(id, modifiedCategory, { new: true });
+  return updated || null;
+};
 
-  return category
-}
-
-// Update a category by ID
-export const updateCategory = async (
-  id: string,
-  modifiedCategory: ICategory,
-) => {
-  const updatedCategory = await Category.findByIdAndUpdate(id, modifiedCategory)
-
-  return !!updatedCategory
-}
-
-// Delete a category by ID
 export const deleteCategory = async (id: string) => {
-  const deletedCategory = await Category.findByIdAndDelete(id)
-
-  return !!deletedCategory
-}
+  const deleted = await Category.findByIdAndDelete(id);
+  return !!deleted;
+};

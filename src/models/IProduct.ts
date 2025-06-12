@@ -1,12 +1,13 @@
-import FileDetails from "./generic/FileDetails";
-import ICategory from "./ICategory";
-
-export default interface IProduct<PlaceholderCategory = string | ICategory> {
+export default interface IProduct {
+  _id: string;
+  shop: string;
   name: string;
-  image: FileDetails;
+  description: string;
+  imageUrl: string;
   price: number;
-  reducedPrice: number | null;
-  //TO-DO: to be replaced with ILocation interface
-  location: string | null;
-  category: PlaceholderCategory
+  reducedPrice?: number;
+  stock: number;
+  category: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

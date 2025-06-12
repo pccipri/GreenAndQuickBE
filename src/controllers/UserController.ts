@@ -5,106 +5,73 @@ import {
   deleteUser,
   getAllUsers,
   getUserById,
-  getUsersByAccountTpe,
+  getUsersByRole,
   updateUser,
 } from '../services/UserService';
 
 const router = express.Router();
 
-// Create a new user
+// Create a user
 router.post('/', async (req: Request, res: Response) => {
   try {
     const user: IUser = req.body;
-
-    const response = await createUser(user);
-
-    res.status(201).json(response);
+    const userId = await createUser(user);
+    res.status(201).json({ id: userId });
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to create user', error: error.message });
+    res.status(500).json({ message: 'Failed to create user', error: error.message });
   }
 });
 
 // Get all users
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   try {
     const users = await getAllUsers();
     res.json(users);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to fetch users', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch users', error: error.message });
   }
 });
 
-// Get Users by Account type
-router.get('/type/:accountType', async (req: Request, res: Response) => {
+// Get users by role
+router.get('/role/:role', async (req: Request, res: Response) => {
   try {
-    const { accountType } = req.params;
-
-    const users = await getUsersByAccountTpe(accountType.toUpperCase());
+    const users = await getUsersByRole(req.params.role);
     res.json(users);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to fetch users', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch users by role', error: error.message });
   }
 });
 
-// Get a single user by ID
+// Get user by ID
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const user = await getUserById(id);
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
+    const user = await getUserById(req.params.id);
+    if (!user) res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to fetch user', error: error.message });
+    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
   }
 });
 
-// Update a user by ID
+// Update user
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const modifiedUser = req.body;
-
-    const updatedUser = await updateUser(id, modifiedUser);
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json(updatedUser);
+    const updated = await updateUser(req.params.id, req.body);
+    if (!updated) res.status(404).json({ message: 'User not found' });
+    res.json(updated);
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to update user', error: error.message });
+    res.status(500).json({ message: 'Failed to update user', error: error.message });
   }
 });
 
-// Delete a user by ID
+// Delete user
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const deletedUser = await deleteUser(id);
-
-    if (!deletedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
+    const deleted = await deleteUser(req.params.id);
+    if (!deleted) res.status(404).json({ message: 'User not found' });
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: 'Failed to delete user', error: error.message });
+    res.status(500).json({ message: 'Failed to delete user', error: error.message });
   }
 });
 
