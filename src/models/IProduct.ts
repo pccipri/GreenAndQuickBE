@@ -6,7 +6,6 @@ export default interface IProduct {
   imageUrl: string;
   price: number;
   reducedPrice?: number;
-  stock: number;
   category: string;
   createdAt: Date;
   updatedAt: Date;

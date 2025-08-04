@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/index.ts",
+    "stripe_webhook": "stripe listen --forward-to localhost:3000/webhook",
     "test": "echo \"Error: no test specified\" && exit 1",
     "seed": "ts-node seeds/seedConstants.ts"
   },
@@ -19,7 +20,8 @@
     "mongodb": "^6.16.0",
     "mongoose": "^8.14.1",
     "passport": "^0.7.0",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "stripe": "^18.2.1"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",

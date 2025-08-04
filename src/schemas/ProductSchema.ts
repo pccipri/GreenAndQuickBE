@@ -8,7 +8,6 @@ export interface ProductDocument extends Document {
   imageUrl: string;
   price: number;
   reducedPrice?: number;
-  stock: number;
   category: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -39,11 +38,6 @@ const productSchema = new Schema<ProductDocument>({
   reducedPrice: {
     type: Number,
     default: null,
-  },
-  stock: {
-    type: Number,
-    required: true,
-    default: 0,
   },
   category: {
     type: Schema.Types.ObjectId,

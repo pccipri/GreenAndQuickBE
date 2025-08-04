@@ -6,6 +6,7 @@ import bodyParser from "body-parser";
 import apiController from "./config/v1";
 import session from 'express-session';
 import passport from "passport";
+import Stripe from "stripe";
 
 dotenv.config();
 
@@ -14,9 +15,11 @@ const name = process.env.MONGODB_USERNAME || "username"
 const password = process.env.MONGODB_PASSWORD || "password"
 const dbName = process.env.MONGODB_DB_NAME || "dbName"
 const ALLOWED_URL = process.env.CORS_WHITELIST_URL || '';
+export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key';
 export const PASSPORT_SECRET = process.env.PASSPORT_SECRET || 'mySecret';
 
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'api_key_placeholder');
 
 const app = express();
 
@@ -29,8 +32,20 @@ const corsOptions = {
   };
 
 // Middleware
+app.use(
+  (
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ): void => {
+    if (req.originalUrl === "/webhook") {
+      next();
+    } else {
+      bodyParser.json()(req, res, next);
+    }
+  }
+);
 app.use(cors(corsOptions));
-app.use(bodyParser.json());
 app.use(
   session({
     secret: PASSPORT_SECRET,
