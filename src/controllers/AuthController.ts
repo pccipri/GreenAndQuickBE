@@ -35,7 +35,7 @@ router.post("/login", (req, res, next) => {
   })(req, res, next)
 })
 
-router.post('/refresh-token', async (req: Request, res: Response) => {
+router.post('/refreshToken', async (req: Request, res: Response) => {
   const refreshTokenValue = req.cookies.refreshToken
   if (!refreshTokenValue) res.status(401).json({ error: 'No refresh token' })
 

@@ -67,7 +67,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 });
 
 // PATCH /favorites/toggle-product
-router.patch('/toggle-product', async (req: Request, res: Response) => {
+router.patch('/toggleProduct', async (req: Request, res: Response) => {
   try {
     const { userId, productId } = req.body;
 

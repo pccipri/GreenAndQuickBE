@@ -21,7 +21,7 @@ router.get('/', async (_req, res) => {
   }
 });
 
-router.get('/low-stock', async (_req, res) => {
+router.get('/lowStock', async (_req, res) => {
   try {
     const items = await getLowStockItems();
     res.json(items);
