@@ -1,12 +1,13 @@
 
-import IUser from '../models/IUser';
+import { ICreateUserDTO, IUser } from '../models/IUser';
 import { User } from '../schemas/UserSchema';
 import { encrypt } from '../utils/encryption';
 
-export const createUser = async (userToSave: IUser) => {
+export const createUser = async (userToSave: ICreateUserDTO) => {
   const newUser = new User({
     ...userToSave,
     password: encrypt(userToSave.password),
+    role: "user"
   });
 
   const response = await newUser.save();

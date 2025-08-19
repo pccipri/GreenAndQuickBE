@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import IUser from '../models/IUser';
+import { ICreateUserDTO } from '../models/IUser';
 import {
   createUser,
   deleteUser,
@@ -14,7 +14,7 @@ const router = express.Router();
 // Create a user
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const user: IUser = req.body;
+    const user: ICreateUserDTO = req.body;
     const userId = await createUser(user);
     res.status(201).json({ id: userId });
   } catch (error: any) {

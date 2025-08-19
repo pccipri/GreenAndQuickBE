@@ -1,66 +1,83 @@
 import express from 'express'
 import passport from 'passport'
-import { isAuthenticated } from '../middlewares/isAuthenticated'
+import { Request, Response } from 'express'
+import jwt from "jsonwebtoken"
+import { IVerifyOptions } from 'passport-local'
+import { requireAuth } from '../middlewares/isAuthenticated'
+import { createRefreshToken, generateAccessToken } from '../utils/tokens'
+import { RefreshToken } from '../schemas/RefreshTokenSchema'
+import { IUser } from '../models/IUser'
 
 const router = express.Router()
 
-// Get logged User
-router.get('/getLoggedUser', (req, res) => {
-  if (req.user) {
-    res.json({ message: 'Logged user data', user: req.user })
-  } else {
-    res.status(204).json({ message: 'User not logged' })
+router.post("/login", (req, res, next) => {
+  passport.authenticate("local", { session: false }, async (err: Error | null, user: IUser | false, info: IVerifyOptions | undefined) => {
+    if (err) return next(err)
+    if (!user) return res.status(401).json({ error: info?.message || "Login failed" })
+
+    // Access token
+    const accessToken = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET || "supersecret",
+      { expiresIn: "15m" }
+    )
+
+    // Refresh token (DB + cookie)
+    const refreshToken = await createRefreshToken(user._id.toString())
+    res.cookie("refreshToken", refreshToken.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 4 * 24 * 60 * 60 * 1000,
+    })
+
+    res.json({ message: "Login successful", accessToken })
+  })(req, res, next)
+})
+
+router.post('/refresh-token', async (req: Request, res: Response) => {
+  const refreshTokenValue = req.cookies.refreshToken
+  if (!refreshTokenValue) res.status(401).json({ error: 'No refresh token' })
+
+  const storedToken = await RefreshToken.findOne({ token: refreshTokenValue, isValid: true })
+  if (!storedToken) { res.status(403).json({ error: 'Invalid or expired refresh token' }); return; }
+  if (storedToken.expiresAt < new Date()) {
+    storedToken.isValid = false
+    await storedToken.save()
+    res.status(403).json({ error: 'Refresh token expired' })
   }
-})
 
-router.get('/isAuthenticated', (req, res) => {
-  // Check if user is authenticated
-  // You can implement any logic here to determine authentication status
-  const isAuthenticated = req.isAuthenticated()
+  // Rotate: invalidate old token
+  storedToken.isValid = false
+  await storedToken.save()
 
-  res.status(200).json({ isAuthenticated })
-})
+  // Issue new tokens
+  const payload = { id: storedToken.userId }
+  const accessToken = generateAccessToken(payload)
+  const newRefreshToken = await createRefreshToken(storedToken.userId.toString())
 
-// Login User
-router.post('/login', (req, res, next) => {
-  // Check if the user is already authenticated
-  if (req.isAuthenticated()) {
-    // If the user is already authenticated, return an error response
-    res.status(400).json({ error: 'User is already logged in.' })
-  }
-
-  // If the user is not already authenticated, proceed with the authentication process
-  passport.authenticate(
-    'local',
-    (err: Error, user: any, info: { message: string }) => {
-      if (err) {
-        return next(err)
-      }
-      if (!user) {
-        // Authentication failed, return error response
-        return res.status(401).json({ error: info.message })
-      }
-      // Authentication successful, log in the user
-      req.login(user, err => {
-        if (err) {
-          return next(err)
-        }
-
-        // Return success response
-        return res.status(200).json({ message: 'Login successfully.' })
-      })
-    },
-  )(req, res, next)
-})
-
-// Logout route
-router.post('/logout', isAuthenticated, (req, res, next) => {
-  req.logout(function (err) {
-    if (err) {
-      return next(err)
-    }
-    res.status(200).json({ message: 'Logged out successfully.' })
+  // Send new refresh in cookie
+  res.cookie('refreshToken', newRefreshToken.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 4 * 24 * 60 * 60 * 1000,
   })
+
+  res.json({ accessToken })
+})
+
+router.post("/logout", async (req: Request, res: Response) => {
+  const token = req.cookies.refreshToken
+  if (token) {
+    await RefreshToken.updateOne({ token }, { isValid: false })
+    res.clearCookie("refreshToken")
+  }
+  res.json({ message: "Logged out" })
+})
+
+router.get('/getLoggedUser', requireAuth, (req: Request, res: Response) => {
+  res.json({ message: 'Logged user data', user: req.user })
 })
 
 export default router

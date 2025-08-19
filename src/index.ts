@@ -4,9 +4,8 @@ import cors from "cors";
 import dotenv from 'dotenv'
 import bodyParser from "body-parser";
 import apiController from "./config/v1";
-import session from 'express-session';
-import passport from "passport";
 import Stripe from "stripe";
+import passport from "./config/passport";
 
 dotenv.config();
 
@@ -26,10 +25,10 @@ const app = express();
 app.use(express.json());
 
 const corsOptions = {
-    origin: ALLOWED_URL,
-    credentials: true,
-    optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
-  };
+  origin: ALLOWED_URL,
+  credentials: true,
+  optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
 
 // Middleware
 app.use(
@@ -46,21 +45,7 @@ app.use(
   }
 );
 app.use(cors(corsOptions));
-app.use(
-  session({
-    secret: PASSPORT_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      // Set session expiration time to 3 hour
-      maxAge: 3 * 60 * 60 * 1000,
-      // Set session expiration time to 3 seconds (Testing purposes)
-      // maxAge: 3000,
-    },
-  }),
-);
 app.use(passport.initialize());
-app.use(passport.session());
 
 app.get('/', (req, res) => {
   res.send('Hello, World!');
@@ -70,7 +55,7 @@ app.use('/api', apiController);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-  
+
   connectToDatabase(`mongodb+srv://${name}:${password}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${dbName}`);
 });
 
