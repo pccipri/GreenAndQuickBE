@@ -11,6 +11,7 @@ import ReviewController from '../controllers/ReviewController'
 import ShopController from '../controllers/ShopController'
 import ShopGroupController from '../controllers/ShopGroupController'
 import SubscriptionController from '../controllers/SubscriptionController'
+import MailController from '../controllers/MailController';
 
 const apiController = express.Router();
 
@@ -27,5 +28,7 @@ apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
 apiController.use('/favourite', FavouriteController);
 apiController.use('/payment', StripeController);
+// Used for testing emails
+// apiController.use('/email', MailController);
 
 export default apiController;
