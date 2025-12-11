@@ -12,6 +12,7 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   phoneNumber: string;
+  isVerified: boolean;
 }
 
 export interface ICreateUserDTO {

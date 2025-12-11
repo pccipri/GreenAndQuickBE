@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { ENCRYPTION_KEY } from '..'
 
-const IV_LENGTH = 16 // For AES, this is always 16
+const IV_LENGTH = 16
 
 const generateKey = (key: string): Buffer => {
   return crypto.createHash('sha256').update(key).digest()

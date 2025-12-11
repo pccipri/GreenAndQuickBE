@@ -1,13 +1,15 @@
 import mongoose, { Schema, Types } from "mongoose";
 import { addressSchema } from "./AddressSchema";
 
+export interface OrderItem {
+  productId: Types.ObjectId;
+  quantity: number;
+}
+
 export interface OrderDocument extends Document {
   userId: Types.ObjectId;
   shopGroupId: Types.ObjectId;
-  items: {
-    productId: Types.ObjectId;
-    quantity: number;
-  }[];
+  items: OrderItem[];
   totalAmount: number;
   paymentOption: 'cash' | 'stripe';
   deliveryOption: 'fanCourier';
@@ -17,7 +19,7 @@ export interface OrderDocument extends Document {
   updatedAt: Date;
 }
 
-const orderItemSchema = new Schema({
+export const orderItemSchema = new Schema({
   productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
   quantity: { type: Number, required: true },
 });

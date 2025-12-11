@@ -1,5 +1,4 @@
 import mongoose, { Document } from 'mongoose';
-import { USER_ROLES } from '../utils/constants';
 import { addressSchema } from './AddressSchema';
 
 const { Schema } = mongoose;
@@ -12,6 +11,7 @@ export interface UserDocument extends Document {
   lastName: string;
   phoneNumber: string;
   addresses: typeof addressSchema[];
+  isVerified: boolean
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,7 +24,8 @@ const userSchema = new Schema<UserDocument>({
   firstName: { type: String },
   lastName: { type: String },
   phoneNumber: { type: String },
-  addresses: [addressSchema]
+  addresses: [addressSchema],
+  isVerified: {type: Boolean, default: false}
 }, { timestamps: true });
 
 export const User = mongoose.model<UserDocument>('User', userSchema);

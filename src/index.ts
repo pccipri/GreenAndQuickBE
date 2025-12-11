@@ -5,6 +5,7 @@ import dotenv from 'dotenv'
 import bodyParser from "body-parser";
 import apiController from "./config/v1";
 import Stripe from "stripe";
+import cookieParser from 'cookie-parser';
 import passport from "./config/passport";
 
 dotenv.config();
@@ -45,6 +46,7 @@ app.use(
   }
 );
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(passport.initialize());
 
 app.get('/', (req, res) => {

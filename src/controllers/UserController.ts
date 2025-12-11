@@ -16,7 +16,7 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const user: ICreateUserDTO = req.body;
     const userId = await createUser(user);
-    res.status(201).json({ id: userId });
+    res.status(201).json({ id: userId, message: 'User registered. Check email for verification link.' });
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to create user', error: error.message });
   }

@@ -1,7 +1,10 @@
 
 import { ICreateUserDTO, IUser } from '../models/IUser';
+import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
 import { encrypt } from '../utils/encryption';
+import { sendVerificationEmail } from '../utils/mailer';
+import { generateVerificationToken } from '../utils/tokens';
 
 export const createUser = async (userToSave: ICreateUserDTO) => {
   const newUser = new User({
@@ -11,6 +14,18 @@ export const createUser = async (userToSave: ICreateUserDTO) => {
   });
 
   const response = await newUser.save();
+
+  // Create verification token
+  const { token, hashedToken } = generateVerificationToken();
+  await EmailConfirmationToken.create({
+    userId: response._id,
+    tokenHash: hashedToken,
+    expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 hour
+  });
+
+  // Send email
+  await sendVerificationEmail(response.email, token);
+
   return response._id;
 };
 

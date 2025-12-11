@@ -25,3 +25,13 @@ export const sendEmail = async (
 
   await transporter.sendMail(mailOptions);
 };
+
+export async function sendVerificationEmail(email: string, token: string) {
+  const url = `http://localhost:3000/auth/verifyRegister/${token}`;
+  await transporter.sendMail({
+    from: process.env.SMTP_USER,
+    to: email,
+    subject: 'Verify Your Account',
+    html: `<p>Click <a href="${url}">here</a> to verify your account. Link expires in 1h.</p>`,
+  });
+}

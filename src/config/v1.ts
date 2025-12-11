@@ -2,7 +2,7 @@ import express from 'express';
 import CategoryController from '../controllers/CategoryController';
 import AuthController from '../controllers/AuthController';
 import UserController from '../controllers/UserController';
-import FavouriteController from '../controllers/FavouriteController';
+import FavoriteController from '../controllers/FavoriteController';
 import StripeController from '../controllers/StripeController'
 import InventoryItemController from '../controllers/InventoryItemController'
 import OrderController from '../controllers/OrderController'
@@ -26,7 +26,7 @@ apiController.use('/inventoryItem', InventoryItemController);
 apiController.use('/subscription', SubscriptionController);
 apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
-apiController.use('/favourite', FavouriteController);
+apiController.use('/favorite', FavoriteController);
 apiController.use('/payment', StripeController);
 // Used for testing emails
 // apiController.use('/email', MailController);

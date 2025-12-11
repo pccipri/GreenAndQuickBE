@@ -1,4 +1,4 @@
-export interface IFavourite {
+export interface IFavorite {
   _id: string;
   user: string;
   products: string[];

@@ -15,3 +15,9 @@ export async function createRefreshToken(userId: string) {
     await refreshToken.save()
     return refreshToken
 }
+
+export function generateVerificationToken() {
+  const token = crypto.randomBytes(32).toString('hex'); // raw token for email
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex'); // store hash
+  return { token, hashedToken };
+}
