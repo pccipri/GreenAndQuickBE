@@ -1,5 +1,5 @@
-import ICategory from "../models/ICategory"
-import { Category } from "../schemas/CategorySchema"
+import ICategory from '../models/ICategory';
+import { Category } from '../schemas/CategorySchema';
 
 export const createCategory = async (categoryToSave: ICategory) => {
   const newCategory = new Category(categoryToSave);

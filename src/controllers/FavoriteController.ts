@@ -1,5 +1,14 @@
-import { Request, Response, Router } from "express";
-import { createFavorite, deleteFavorite, getAllFavorites, getFavoriteById, getFavoritesByUser, toggleProductInFavorite, updateFavorite } from "../services/FavoriteService";
+import { Request, Response, Router } from 'express';
+import {
+  createFavorite,
+  deleteFavorite,
+  getAllFavorites,
+  getFavoriteById,
+  getFavoritesByUser,
+  toggleProductInFavorite,
+  updateFavorite,
+} from '../services/FavoriteService';
+import { IdParams } from '@/models/generic/Routes';
 
 const router = Router();
 
@@ -24,7 +33,7 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // Get Favorite by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const favourite = await getFavoriteById(req.params.id);
     if (!favourite) res.status(404).json({ message: 'Favourite not found' });
@@ -35,9 +44,10 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Get Favorites by user
-router.get('/user/:userId', async (req: Request, res: Response) => {
+router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
   try {
-    const favourites = await getFavoritesByUser(req.params.userId);
+    const { id: userId } = req.params;
+    const favourites = await getFavoritesByUser(userId);
     res.json(favourites);
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to fetch Favourites for user', error: error.message });
@@ -45,7 +55,7 @@ router.get('/user/:userId', async (req: Request, res: Response) => {
 });
 
 // Update a Favorite
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateFavorite(req.params.id, req.body);
     if (!updated) res.status(404).json({ message: 'Favourite not found' });
@@ -56,7 +66,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete a Favorite
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteFavorite(req.params.id);
     if (!deleted) res.status(404).json({ message: 'Favourite not found' });
@@ -77,9 +87,7 @@ router.patch('/toggleProduct', async (req: Request, res: Response) => {
 
     const result = await toggleProductInFavorite(userId, productId);
     res.json({
-      message: result.added
-        ? 'Product added to favorites'
-        : 'Product removed from favorites'
+      message: result.added ? 'Product added to favorites' : 'Product removed from favorites',
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to toggle product', error: error.message });

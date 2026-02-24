@@ -11,11 +11,7 @@ const transporter: Transporter = nodemailer.createTransport({
   },
 });
 
-export const sendEmail = async (
-  to: string,
-  subject: string,
-  text: string
-): Promise<void> => {
+export const sendEmail = async (to: string, subject: string, text: string): Promise<void> => {
   const mailOptions: SendMailOptions = {
     from: process.env.SMTP_USER,
     to,

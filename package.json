@@ -7,7 +7,11 @@
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
     "seed": "tsx seeds/seedConstants.ts",
-    "stripe_webhook": "stripe listen --forward-to localhost:3000/webhook"
+    "stripe_webhook": "stripe listen --forward-to localhost:3000/webhook",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "author": "",
   "license": "ISC",
@@ -28,6 +32,7 @@
     "stripe": "^20.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/express-session": "^1.18.2",
@@ -38,8 +43,13 @@
     "@types/passport": "^1.0.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
+    "eslint": "^10.0.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^17.24.0",
     "nodemon": "^3.1.11",
+    "prettier": "^3.8.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0"
   }
 }

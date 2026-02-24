@@ -1,5 +1,5 @@
-import { ISubscription } from "../models/ISubscription";
-import { Subscription } from "../schemas/SubscriptionSchema";
+import { ISubscription } from '../models/ISubscription';
+import { Subscription } from '../schemas/SubscriptionSchema';
 
 // Create subscription
 export const createSubscription = async (data: ISubscription) => {

@@ -1,5 +1,5 @@
-import { IShopGroup } from "../models/IShopGroup";
-import { ShopGroup } from "../schemas/ShopGroupSchema";
+import { IShopGroup } from '../models/IShopGroup';
+import { ShopGroup } from '../schemas/ShopGroupSchema';
 
 // Create shop group
 export const createShopGroup = async (groupData: IShopGroup) => {

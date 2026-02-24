@@ -1,5 +1,5 @@
-import { IReview } from "../models/IReview";
-import { Review } from "../schemas/ReviewSchema";
+import { IReview } from '../models/IReview';
+import { Review } from '../schemas/ReviewSchema';
 
 // Create a review
 export const createReview = async (reviewData: IReview) => {

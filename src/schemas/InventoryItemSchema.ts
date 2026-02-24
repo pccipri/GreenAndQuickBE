@@ -1,4 +1,4 @@
-import mongoose, {Types } from "mongoose";
+import mongoose, { Types } from 'mongoose';
 
 const { Schema } = mongoose;
 
@@ -16,9 +16,12 @@ const inventoryItemSchema = new Schema<InventoryItemDocument>(
     productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
     shopId: { type: Schema.Types.ObjectId, ref: 'Shop', required: true },
     stock: { type: Number, required: true, default: 0 },
-    lowStockThreshold: { type: Number, default: 5 }
+    lowStockThreshold: { type: Number, default: 5 },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const InventoryItem = mongoose.model<InventoryItemDocument>('InventoryItem', inventoryItemSchema);
+export const InventoryItem = mongoose.model<InventoryItemDocument>(
+  'InventoryItem',
+  inventoryItemSchema,
+);

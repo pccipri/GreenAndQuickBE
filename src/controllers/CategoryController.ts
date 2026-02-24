@@ -1,7 +1,13 @@
 import { Request, Response, Router } from 'express';
-import { createCategory, deleteCategory, getAllCategories, getCategoryById, updateCategory } from '../services/CategoryService';
+import {
+  createCategory,
+  deleteCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+} from '../services/CategoryService';
 import ICategory from '../models/ICategory';
-
+import { IdParams } from '@/models/generic/Routes';
 
 const router = Router();
 
@@ -27,7 +33,7 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // Get a category by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const category = await getCategoryById(req.params.id);
     if (!category) res.status(404).json({ message: 'Category not found' });
@@ -38,7 +44,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Update a category by ID
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateCategory(req.params.id, req.body);
     if (!updated) res.status(404).json({ message: 'Category not found' });
@@ -49,7 +55,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete a category by ID
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteCategory(req.params.id);
     if (!deleted) res.status(404).json({ message: 'Category not found' });

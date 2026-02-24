@@ -1,5 +1,5 @@
-import mongoose, { Types } from "mongoose";
-import { addressSchema } from "./AddressSchema";
+import mongoose, { Types } from 'mongoose';
+import { addressSchema } from './AddressSchema';
 
 const { Schema } = mongoose;
 
@@ -26,7 +26,7 @@ const shopSchema = new Schema<ShopDocument>(
     },
     categories: { type: [String], required: true, default: [] },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Shop = mongoose.model<ShopDocument>('Shop', shopSchema);

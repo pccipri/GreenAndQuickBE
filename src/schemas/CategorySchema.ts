@@ -8,9 +8,12 @@ export interface CategoryDocument extends Document {
   updatedAt: Date;
 }
 
-const categorySchema = new Schema<CategoryDocument>({
-  name: { type: String, required: true, unique: true },
-  isGlobal: { type: Boolean, default: false }
-}, { timestamps: true });
+const categorySchema = new Schema<CategoryDocument>(
+  {
+    name: { type: String, required: true, unique: true },
+    isGlobal: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
 
 export const Category = mongoose.model<CategoryDocument>('Category', categorySchema);

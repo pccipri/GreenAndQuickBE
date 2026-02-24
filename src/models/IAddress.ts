@@ -6,4 +6,3 @@ export default interface IAddress {
   zipcode: number;
   isDefault: boolean;
 }
-  

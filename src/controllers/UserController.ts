@@ -8,6 +8,7 @@ import {
   getUsersByRole,
   updateUser,
 } from '../services/UserService';
+import { IdParams, RoleParams } from '@/models/generic/Routes';
 
 const router = express.Router();
 
@@ -16,7 +17,9 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     const user: ICreateUserDTO = req.body;
     const userId = await createUser(user);
-    res.status(201).json({ id: userId, message: 'User registered. Check email for verification link.' });
+    res
+      .status(201)
+      .json({ id: userId, message: 'User registered. Check email for verification link.' });
   } catch (error: any) {
     res.status(500).json({ message: 'Failed to create user', error: error.message });
   }
@@ -33,7 +36,7 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // Get users by role
-router.get('/role/:role', async (req: Request, res: Response) => {
+router.get('/role/:role', async (req: Request<RoleParams>, res: Response) => {
   try {
     const users = await getUsersByRole(req.params.role);
     res.json(users);
@@ -43,7 +46,7 @@ router.get('/role/:role', async (req: Request, res: Response) => {
 });
 
 // Get user by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const user = await getUserById(req.params.id);
     if (!user) res.status(404).json({ message: 'User not found' });
@@ -54,7 +57,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Update user
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateUser(req.params.id, req.body);
     if (!updated) res.status(404).json({ message: 'User not found' });
@@ -65,7 +68,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete user
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteUser(req.params.id);
     if (!deleted) res.status(404).json({ message: 'User not found' });

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Schema, Types } from 'mongoose';
 
 export interface IEmailConfirmationToken extends Document {
   userId: Types.ObjectId;
@@ -14,5 +14,5 @@ const tokenSchema = new Schema<IEmailConfirmationToken>({
 
 export const EmailConfirmationToken = mongoose.model<IEmailConfirmationToken>(
   'EmailConfirmationToken',
-  tokenSchema
+  tokenSchema,
 );

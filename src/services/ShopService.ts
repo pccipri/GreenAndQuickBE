@@ -1,5 +1,5 @@
-import { IShop } from "../models/IShop";
-import { Shop } from "../schemas/ShopSchema";
+import { IShop } from '../models/IShop';
+import { Shop } from '../schemas/ShopSchema';
 
 // Create a shop
 export const createShop = async (shopData: IShop) => {

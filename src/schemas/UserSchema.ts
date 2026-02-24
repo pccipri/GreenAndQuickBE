@@ -10,22 +10,25 @@ export interface UserDocument extends Document {
   firstName: string;
   lastName: string;
   phoneNumber: string;
-  addresses: typeof addressSchema[];
-  isVerified: boolean
+  addresses: (typeof addressSchema)[];
+  isVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const userSchema = new Schema<UserDocument>({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true, trim: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['user', 'admin', 'shopOwner'], required: true },
-  firstName: { type: String },
-  lastName: { type: String },
-  phoneNumber: { type: String },
-  addresses: [addressSchema],
-  isVerified: {type: Boolean, default: false}
-}, { timestamps: true });
+const userSchema = new Schema<UserDocument>(
+  {
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, trim: true },
+    password: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin', 'shopOwner'], required: true },
+    firstName: { type: String },
+    lastName: { type: String },
+    phoneNumber: { type: String },
+    addresses: [addressSchema],
+    isVerified: { type: Boolean, default: false },
+  },
+  { timestamps: true },
+);
 
 export const User = mongoose.model<UserDocument>('User', userSchema);

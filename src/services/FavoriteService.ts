@@ -1,6 +1,6 @@
-import { Types } from "mongoose";
-import { IFavorite } from "../models/IFavorite";
-import { Favorite } from "../schemas/FavoriteSchema";
+import { Types } from 'mongoose';
+import { IFavorite } from '../models/IFavorite';
+import { Favorite } from '../schemas/FavoriteSchema';
 
 export const createFavorite = async (FavoriteToSave: IFavorite) => {
   const newFavourite = new Favorite(FavoriteToSave);
@@ -10,7 +10,7 @@ export const createFavorite = async (FavoriteToSave: IFavorite) => {
 
 export const getAllFavorites = async () => {
   const favourites = await Favorite.find();
-  return favourites.map(f => f.toJSON());
+  return favourites.map((f) => f.toJSON());
 };
 
 export const getFavoriteById = async (id: string) => {
@@ -24,7 +24,7 @@ export const getFavoritesByUser = async (userId: string) => {
 };
 
 export const updateFavorite = async (id: string, modifiedFavorite: IFavorite) => {
-  const updatedFavourite = await Favorite.findByIdAndUpdate(id, modifiedFavorite, {new: true});
+  const updatedFavourite = await Favorite.findByIdAndUpdate(id, modifiedFavorite, { new: true });
   return !!updatedFavourite;
 };
 
@@ -40,18 +40,18 @@ export const toggleProductInFavorite = async (userId: string, productId: string)
     // Create a new favorite if it doesn't exist
     const newFavourite = new Favorite({
       user: userId,
-      products: [productId]
+      products: [productId],
     });
     await newFavourite.save();
     return { added: true };
   }
 
   const productObjectId = new Types.ObjectId(productId);
-  const alreadyExists = favorite.products.some(p => p.equals(productObjectId));
+  const alreadyExists = favorite.products.some((p) => p.equals(productObjectId));
 
   if (alreadyExists) {
     // Remove the product
-    favorite.products = favorite.products.filter(p => !p.equals(productObjectId));
+    favorite.products = favorite.products.filter((p) => !p.equals(productObjectId));
     await favorite.save();
     return { added: false };
   } else {
@@ -61,4 +61,3 @@ export const toggleProductInFavorite = async (userId: string, productId: string)
     return { added: true };
   }
 };
-

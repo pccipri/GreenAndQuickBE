@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Request, Response, Router } from 'express';
 import {
   createProduct,
   deleteProduct,
@@ -8,8 +8,9 @@ import {
   getProductsByShop,
   searchProductsByName,
   updateProduct,
-} from "../services/ProductService";
-import IProduct from "../models/IProduct";
+} from '../services/ProductService';
+import IProduct from '../models/IProduct';
+import { IdParams } from '@/models/generic/Routes';
 
 const router = Router();
 
@@ -35,7 +36,7 @@ router.get('/', async (_req: Request, res: Response) => {
 });
 
 // Get a single product by ID
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const product = await getProductById(req.params.id);
     if (!product) res.status(404).json({ message: 'Product not found' });
@@ -46,9 +47,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // Get products by shop ID
-router.get('/shop/:shopId', async (req: Request, res: Response) => {
+router.get('/shop/:id', async (req: Request<IdParams>, res: Response) => {
   try {
-    const { shopId } = req.params;
+    const { id: shopId } = req.params;
     const products = await getProductsByShop(shopId);
     res.json(products);
   } catch (error: any) {
@@ -57,9 +58,9 @@ router.get('/shop/:shopId', async (req: Request, res: Response) => {
 });
 
 // Get products by category ID
-router.get('/category/:categoryId', async (req: Request, res: Response) => {
+router.get('/category/:id', async (req: Request<IdParams>, res: Response) => {
   try {
-    const { categoryId } = req.params;
+    const { id: categoryId } = req.params;
     const products = await getProductsByCategory(categoryId);
     res.json(products);
   } catch (error: any) {
@@ -83,7 +84,7 @@ router.get('/search', async (req: Request, res: Response) => {
 });
 
 // Update a product by ID
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateProduct(req.params.id, req.body);
     if (!updated) res.status(404).json({ message: 'Product not found' });
@@ -94,7 +95,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 // Delete a product by ID
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteProduct(req.params.id);
     if (!deleted) res.status(404).json({ message: 'Product not found' });

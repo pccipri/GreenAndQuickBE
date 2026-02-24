@@ -1,5 +1,12 @@
-import { Response, Request, Router } from "express";
-import { createSubscription, deleteSubscription, getAllSubscriptions, getSubscriptionById, getSubscriptionsByUser, updateSubscription } from "../services/SubscriptionService";
+import { Response, Request, Router } from 'express';
+import {
+  createSubscription,
+  deleteSubscription,
+  getAllSubscriptions,
+  getSubscriptionById,
+  getSubscriptionsByUser,
+  updateSubscription,
+} from '../services/SubscriptionService';
 
 const router = Router();
 

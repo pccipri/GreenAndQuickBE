@@ -1,5 +1,5 @@
-import { IInventoryItem } from "../models/IInventoryItem";
-import { InventoryItem } from "../schemas/InventoryItemSchema";
+import { IInventoryItem } from '../models/IInventoryItem';
+import { InventoryItem } from '../schemas/InventoryItemSchema';
 
 export const createInventoryItem = async (data: IInventoryItem) => {
   const item = new InventoryItem(data);
@@ -38,5 +38,5 @@ export const deleteInventoryItem = async (id: string) => {
 };
 
 export const getLowStockItems = async () => {
-  return await InventoryItem.find({ $expr: { $lte: ["$stock", "$lowStockThreshold"] } });
+  return await InventoryItem.find({ $expr: { $lte: ['$stock', '$lowStockThreshold'] } });
 };

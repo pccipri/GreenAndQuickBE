@@ -1,5 +1,15 @@
-import { Router, Request, Response } from "express";
-import { adjustInventoryStock, createInventoryItem, deleteInventoryItem, getAllInventoryItems, getInventoryByProduct, getInventoryByShop, getInventoryItemById, getLowStockItems, updateInventoryItem } from "../services/InventoryItemService";
+import { Router, Request, Response } from 'express';
+import {
+  adjustInventoryStock,
+  createInventoryItem,
+  deleteInventoryItem,
+  getAllInventoryItems,
+  getInventoryByProduct,
+  getInventoryByShop,
+  getInventoryItemById,
+  getLowStockItems,
+  updateInventoryItem,
+} from '../services/InventoryItemService';
 
 const router = Router();
 

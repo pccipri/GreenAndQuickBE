@@ -1,5 +1,5 @@
-import mongoose, { Types } from "mongoose";
-import { AddressDocument, addressSchema } from "./AddressSchema";
+import mongoose, { Types } from 'mongoose';
+import { AddressDocument, addressSchema } from './AddressSchema';
 
 const { Schema } = mongoose;
 
@@ -19,7 +19,7 @@ const shopGroupSchema = new Schema<ShopGroupDocument>(
     shops: [{ type: Schema.Types.ObjectId, ref: 'Shop', required: true }],
     deliveryAddress: { type: addressSchema, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const ShopGroup = mongoose.model<ShopGroupDocument>('ShopGroup', shopGroupSchema);

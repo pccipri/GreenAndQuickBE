@@ -1,4 +1,4 @@
-import mongoose, { Schema, Types } from "mongoose";
+import mongoose, { Schema, Types } from 'mongoose';
 
 export interface ReviewDocument extends Document {
   user: Types.ObjectId;
@@ -16,9 +16,9 @@ const reviewSchema = new Schema<ReviewDocument>(
     product: { type: Schema.Types.ObjectId, ref: 'Product' },
     shop: { type: Schema.Types.ObjectId, ref: 'Shop' },
     rating: { type: Number, required: true },
-    comment: { type: String }
+    comment: { type: String },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // exactly one of `product` or `shop` must be set
@@ -28,7 +28,9 @@ reviewSchema.pre('validate', function (next) {
 
   if (hasProduct === hasShop) {
     return next(
-      new mongoose.Error.ValidationError(Error('Review must be associated with either a product or a shop, but not both.'))
+      new mongoose.Error.ValidationError(
+        Error('Review must be associated with either a product or a shop, but not both.'),
+      ),
     );
   }
 

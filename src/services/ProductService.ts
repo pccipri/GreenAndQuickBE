@@ -1,5 +1,5 @@
-import IProduct from "../models/IProduct";
-import { Product } from "../schemas/ProductSchema";
+import IProduct from '../models/IProduct';
+import { Product } from '../schemas/ProductSchema';
 
 // Create a new product
 export const createProduct = async (productToSave: IProduct) => {

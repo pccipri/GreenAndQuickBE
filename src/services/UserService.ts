@@ -1,4 +1,3 @@
-
 import { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
@@ -10,7 +9,7 @@ export const createUser = async (userToSave: ICreateUserDTO) => {
   const newUser = new User({
     ...userToSave,
     password: encrypt(userToSave.password),
-    role: "user"
+    role: 'user',
   });
 
   const response = await newUser.save();

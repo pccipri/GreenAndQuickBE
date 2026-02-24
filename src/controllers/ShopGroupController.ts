@@ -1,5 +1,11 @@
-import { Response, Request, Router } from "express";
-import { createShopGroup, deleteShopGroup, getAllShopGroups, getShopGroupById, updateShopGroup } from "../services/ShopGroupService";
+import { Response, Request, Router } from 'express';
+import {
+  createShopGroup,
+  deleteShopGroup,
+  getAllShopGroups,
+  getShopGroupById,
+  updateShopGroup,
+} from '../services/ShopGroupService';
 
 const router = Router();
 

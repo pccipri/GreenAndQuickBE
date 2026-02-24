@@ -1,6 +1,6 @@
-import mongoose, { Schema, Types } from "mongoose";
-import { AddressDocument, addressSchema } from "./AddressSchema";
-import { OrderItem, orderItemSchema } from "./OrderSchema";
+import mongoose, { Schema, Types } from 'mongoose';
+import { AddressDocument, addressSchema } from './AddressSchema';
+import { OrderItem, orderItemSchema } from './OrderSchema';
 
 export interface SubscriptionDocument extends Document {
   userId: Types.ObjectId;
@@ -26,7 +26,10 @@ const subscriptionSchema = new Schema<SubscriptionDocument>(
     isActive: { type: Boolean, required: true, default: true },
     deliveryAddress: { type: addressSchema, required: true },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-export const Subscription = mongoose.model<SubscriptionDocument>('Subscription', subscriptionSchema);
+export const Subscription = mongoose.model<SubscriptionDocument>(
+  'Subscription',
+  subscriptionSchema,
+);

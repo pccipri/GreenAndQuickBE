@@ -1,5 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { createReview, deleteReview, getAllReviews, getReviewById, getReviewsByProduct, getReviewsByShop, getReviewsByUser, updateReview } from "../services/ReviewService";
+import {
+  createReview,
+  deleteReview,
+  getAllReviews,
+  getReviewById,
+  getReviewsByProduct,
+  getReviewsByShop,
+  getReviewsByUser,
+  updateReview,
+} from '../services/ReviewService';
 
 const router = Router();
 

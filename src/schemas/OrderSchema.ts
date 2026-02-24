@@ -1,5 +1,5 @@
-import mongoose, { Schema, Types } from "mongoose";
-import { addressSchema } from "./AddressSchema";
+import mongoose, { Schema, Types } from 'mongoose';
+import { addressSchema } from './AddressSchema';
 
 export interface OrderItem {
   productId: Types.ObjectId;
@@ -39,7 +39,7 @@ const orderSchema = new Schema<OrderDocument>(
       default: 'pending',
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export const Order = mongoose.model<OrderDocument>('Order', orderSchema);

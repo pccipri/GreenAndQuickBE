@@ -1,46 +1,51 @@
-import express from 'express'
-import passport from 'passport'
-import { Request, Response } from 'express'
-import jwt from "jsonwebtoken"
-import crypto from 'crypto'
-import { IVerifyOptions } from 'passport-local'
-import { requireAuth } from '../middlewares/isAuthenticated'
-import { createRefreshToken, generateAccessToken } from '../utils/tokens'
-import { RefreshToken } from '../schemas/RefreshTokenSchema'
-import { IUser } from '../models/IUser'
-import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema'
-import { User } from '../schemas/UserSchema'
+import express from 'express';
+import passport from 'passport';
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { IVerifyOptions } from 'passport-local';
+import { requireAuth } from '../middlewares/isAuthenticated';
+import { createRefreshToken, generateAccessToken } from '../utils/tokens';
+import { RefreshToken } from '../schemas/RefreshTokenSchema';
+import { IUser } from '../models/IUser';
+import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
+import { User } from '../schemas/UserSchema';
+import { TokenParams } from '@/models/generic/Routes';
 
-const router = express.Router()
+const router = express.Router();
 
-router.post("/login", (req, res, next) => {
-  passport.authenticate("local", { session: false }, async (err: Error | null, user: IUser | false, info: IVerifyOptions | undefined) => {
-    if (err) return next(err);
-    if (!user) return res.status(401).json({ error: info?.message || "Login failed" });
+router.post('/login', (req, res, next) => {
+  passport.authenticate(
+    'local',
+    { session: false },
+    async (err: Error | null, user: IUser | false, info: IVerifyOptions | undefined) => {
+      if (err) return next(err);
+      if (!user) return res.status(401).json({ error: info?.message || 'Login failed' });
 
-    // 🔹 Check if email is verified
-    if (!user.isVerified) {
-      return res.status(403).json({ error: "Please verify your email before logging in." });
-    }
+      // 🔹 Check if email is verified
+      if (!user.isVerified) {
+        return res.status(403).json({ error: 'Please verify your email before logging in.' });
+      }
 
-    // Access token
-    const accessToken = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET || "supersecret",
-      { expiresIn: "15m" }
-    );
+      // Access token
+      const accessToken = jwt.sign(
+        { id: user._id, email: user.email },
+        process.env.JWT_SECRET || 'supersecret',
+        { expiresIn: '15m' },
+      );
 
-    // Refresh token (DB + cookie)
-    const refreshToken = await createRefreshToken(user._id.toString());
-    res.cookie("refreshToken", refreshToken.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 4 * 24 * 60 * 60 * 1000,
-    });
+      // Refresh token (DB + cookie)
+      const refreshToken = await createRefreshToken(user._id.toString());
+      res.cookie('refreshToken', refreshToken.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 4 * 24 * 60 * 60 * 1000,
+      });
 
-    res.json({ message: "Login successful", accessToken });
-  })(req, res, next);
+      res.json({ message: 'Login successful', accessToken });
+    },
+  )(req, res, next);
 });
 
 router.post('/refreshToken', async (req: Request, res: Response) => {
@@ -61,8 +66,8 @@ router.post('/refreshToken', async (req: Request, res: Response) => {
     if (storedToken.expiresAt < new Date()) {
       storedToken.isValid = false;
       await storedToken.save();
-     res.status(403).json({ error: 'Refresh token expired' });
-      return ;
+      res.status(403).json({ error: 'Refresh token expired' });
+      return;
     }
 
     // Rotate: invalidate old token
@@ -89,24 +94,24 @@ router.post('/refreshToken', async (req: Request, res: Response) => {
   }
 });
 
-router.post("/logout", async (req: Request, res: Response) => {
-  const token = req.cookies.refreshToken
+router.post('/logout', async (req: Request, res: Response) => {
+  const token = req.cookies.refreshToken;
   if (token) {
-    await RefreshToken.updateOne({ token }, { isValid: false })
-    res.clearCookie("refreshToken")
+    await RefreshToken.updateOne({ token }, { isValid: false });
+    res.clearCookie('refreshToken');
   }
-  res.json({ message: "Logged out" })
-})
+  res.json({ message: 'Logged out' });
+});
 
 router.get('/getLoggedUser', requireAuth, (req: Request, res: Response) => {
-  res.json({ message: 'Logged user data', user: req.user })
-})
+  res.json({ message: 'Logged user data', user: req.user });
+});
 
-router.get("/confirm/:token", async (req: Request, res: Response) => {
+router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) => {
   const { token } = req.params;
 
   // Hash incoming token
-  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
   // Find token record (expired tokens will be excluded)
   const record = await EmailConfirmationToken.findOne({
@@ -120,15 +125,15 @@ router.get("/confirm/:token", async (req: Request, res: Response) => {
     if (maybeExpired) {
       await EmailConfirmationToken.deleteOne({ _id: maybeExpired._id });
     }
-    res.status(400).json({ message: "Invalid or expired token" });
-    return 
+    res.status(400).json({ message: 'Invalid or expired token' });
+    return;
   }
 
   // If valid: verify user and cleanup
   await User.findByIdAndUpdate(record.userId, { isVerified: true });
   await EmailConfirmationToken.deleteMany({ userId: record.userId }); // Clean up all tokens
 
-  res.json({ message: "Email verified successfully" });
-  return 
+  res.json({ message: 'Email verified successfully' });
+  return;
 });
-export default router
+export default router;
