@@ -31,3 +31,6 @@ export const NUTRIENT_LABELS = [
   'Protein',
   'Salt',
 ] as const;
+
+export const PUBLIC_IMAGE_BUCKET = 'public-images';
+export const PRIVATE_DOCUMENT_BUCKET = 'private-documents';

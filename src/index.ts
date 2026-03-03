@@ -8,6 +8,7 @@ import Stripe from 'stripe';
 import cookieParser from 'cookie-parser';
 import passport from './config/passport';
 import { errorHandler } from './middlewares/errorHandler';
+import { ensureStorageBuckets } from './libs/supabase/supabaseBuckets';
 
 dotenv.config();
 
@@ -53,4 +54,7 @@ app.listen(PORT, () => {
   connectToDatabase(
     `mongodb+srv://${name}:${password}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${dbName}`,
   );
+  ensureStorageBuckets().catch((error) => {
+    console.error(error);
+  });
 });
