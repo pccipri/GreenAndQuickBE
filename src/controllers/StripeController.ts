@@ -13,7 +13,7 @@ router.post('/create-payment-intent', async (req: Request, res: Response): Promi
     paymentMethodOptions,
   }: { currency: string; paymentMethodType: string; paymentMethodOptions?: object } = req.body;
 
-  let orderAmount = 5999;
+  const orderAmount = 5999;
   let params: Stripe.PaymentIntentCreateParams;
 
   // Each payment method type has support for different currencies. In order to

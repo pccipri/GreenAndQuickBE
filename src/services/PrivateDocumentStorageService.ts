@@ -8,26 +8,14 @@ import {
 } from './StorageService';
 import { getExtension, normalizeFolder } from '@/utils/storage';
 import { PRIVATE_DOCUMENT_BUCKET } from '@/utils/constants';
-
-type UploadPrivateDocumentInput = {
-  file: Buffer | Uint8Array | ArrayBuffer;
-  originalFilename: string;
-  mimeType: string;
-  folder?: string;
-};
-
-type UploadPrivateDocumentResult = {
-  path: string;
-};
-
-type ReplacePrivateDocumentInput = {
-  path: string;
-  file: Buffer | Uint8Array | ArrayBuffer;
-  mimeType: string;
-};
+import {
+  ReplaceBucketFileInput,
+  UploadBucketFileInput,
+  UploadPrivateDocumentResult,
+} from '@/models/generic/FileDetails';
 
 export async function uploadPrivateDocument(
-  input: UploadPrivateDocumentInput,
+  input: UploadBucketFileInput,
 ): Promise<UploadPrivateDocumentResult> {
   const extension = getExtension(input.originalFilename);
   const filename = `${randomUUID()}${extension}`;
@@ -45,7 +33,7 @@ export async function uploadPrivateDocument(
 }
 
 export async function replacePrivateDocument(
-  input: ReplacePrivateDocumentInput,
+  input: ReplaceBucketFileInput,
 ): Promise<{ path: string }> {
   await replaceFile({
     bucket: PRIVATE_DOCUMENT_BUCKET,

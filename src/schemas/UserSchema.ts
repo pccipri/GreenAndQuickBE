@@ -8,6 +8,7 @@ export interface UserDocument extends Document {
   password: string;
   role: 'user' | 'admin' | 'shopOwner';
   firstName: string;
+  avatarPath: string | null;
   lastName: string;
   phoneNumber: string;
   addresses: (typeof addressSchema)[];
@@ -21,10 +22,11 @@ const userSchema = new Schema<UserDocument>(
     username: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true, trim: true },
     password: { type: String, required: true },
+    avatarPath: { type: String, default: null },
     role: { type: String, enum: ['user', 'admin', 'shopOwner'], required: true },
-    firstName: { type: String },
-    lastName: { type: String },
-    phoneNumber: { type: String },
+    firstName: { type: String, required: false },
+    lastName: { type: String, required: false },
+    phoneNumber: { type: String, required: false },
     addresses: [addressSchema],
     isVerified: { type: Boolean, default: false },
   },

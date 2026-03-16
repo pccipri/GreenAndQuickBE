@@ -1,6 +1,21 @@
-export default interface FileDetails {
-  fileType: { type: String };
-  fileName: { type: String };
-  size: { type: Number };
-  data?: { type: Buffer };
+export interface UploadBucketFileInput {
+  file: Buffer | Uint8Array | ArrayBuffer;
+  originalFilename: string;
+  mimeType: string;
+  folder?: string;
+}
+
+export interface ReplaceBucketFileInput {
+  path: string;
+  file: Buffer | Uint8Array | ArrayBuffer;
+  mimeType: string;
+}
+
+export interface UploadPublicImageResult {
+  path: string;
+  publicUrl: string;
+}
+
+export interface UploadPrivateDocumentResult {
+  path: string;
 }

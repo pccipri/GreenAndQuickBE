@@ -2,27 +2,14 @@ import { getExtension, normalizeFolder } from '@/utils/storage';
 import { randomUUID } from 'node:crypto';
 import { deleteFile, getPublicFileUrl, replaceFile, uploadFile } from './StorageService';
 import { PUBLIC_IMAGE_BUCKET } from '@/utils/constants';
-
-type UploadPublicImageInput = {
-  file: Buffer | Uint8Array | ArrayBuffer;
-  originalFilename: string;
-  mimeType: string;
-  folder?: string;
-};
-
-type UploadPublicImageResult = {
-  path: string;
-  publicUrl: string;
-};
-
-type ReplacePublicImageInput = {
-  path: string;
-  file: Buffer | Uint8Array | ArrayBuffer;
-  mimeType: string;
-};
+import {
+  ReplaceBucketFileInput,
+  UploadBucketFileInput,
+  UploadPublicImageResult,
+} from '@/models/generic/FileDetails';
 
 export async function uploadPublicImage(
-  input: UploadPublicImageInput,
+  input: UploadBucketFileInput,
 ): Promise<UploadPublicImageResult> {
   const extension = getExtension(input.originalFilename);
   const filename = `${randomUUID()}${extension}`;
@@ -43,7 +30,7 @@ export async function uploadPublicImage(
 }
 
 export async function replacePublicImage(
-  input: ReplacePublicImageInput,
+  input: ReplaceBucketFileInput,
 ): Promise<{ path: string; publicUrl: string }> {
   await replaceFile({
     bucket: PUBLIC_IMAGE_BUCKET,

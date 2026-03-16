@@ -6,17 +6,19 @@ export interface IUser {
   email: string;
   password: string;
   role: 'user' | 'admin' | 'shopOwner';
-  firstName: string;
-  lastName: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatarPath: string | null;
   addresses: IAddress[];
   createdAt: Date;
   updatedAt: Date;
-  phoneNumber: string;
+  phoneNumber: string | null;
   isVerified: boolean;
 }
 
-export interface ICreateUserDTO {
-  username: string;
-  email: string;
-  password: string;
+export interface UserDto extends Omit<IUser, '_id' | 'avatarPath' | 'password'> {
+  id: string;
+  avatarUrl: string | null;
 }
+
+export type ICreateUserDTO = Omit<IUser, '_id' | 'createdAt' | 'updatedAt' | 'isVerified'>;
