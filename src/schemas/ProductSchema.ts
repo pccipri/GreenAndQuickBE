@@ -5,9 +5,9 @@ export interface ProductDocument extends Document {
   shop: Types.ObjectId;
   name: string;
   description: string;
-  imageUrl: string;
+  imagePath: string | null;
   price: number;
-  reducedPrice?: number;
+  reducedPrice: number | null;
   category: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -28,10 +28,7 @@ const productSchema = new Schema<ProductDocument>(
       type: String,
       required: true,
     },
-    imageUrl: {
-      type: String,
-      required: true,
-    },
+    imagePath: { type: String, default: null },
     price: {
       type: Number,
       required: true,

@@ -160,14 +160,14 @@ router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (existingUser.avatarPath) {
-      await deletePublicImage(existingUser.avatarPath);
-    }
-
     const deleted = await deleteUser(req.params.id);
 
     if (!deleted) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (existingUser.avatarPath) {
+      await deletePublicImage(existingUser.avatarPath);
     }
 
     res.json({ message: 'User deleted successfully' });
