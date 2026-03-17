@@ -1,4 +1,5 @@
 import { HttpError } from '@/middlewares/errorHandler';
+import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { Recipe } from '@/schemas/RecipeSchema';
 import { SortOrder, Types } from 'mongoose';
 
@@ -47,7 +48,8 @@ export const recipeService = {
       ...payload,
       authorId: new Types.ObjectId(authorId),
     });
-    return doc;
+
+    return toRecipeDto(doc);
   },
 
   async getById(requesterId: string | null, id: string) {
@@ -59,7 +61,7 @@ export const recipeService = {
     const isOwner = requesterId && String(recipe.authorId) === String(requesterId);
     if (!recipe.isPublished && !isOwner) throw new HttpError(403, 'Forbidden');
 
-    return recipe;
+    return toRecipeDto(recipe);
   },
 
   async getBySlug(requesterId: string | null, slug: string) {
@@ -69,7 +71,7 @@ export const recipeService = {
     const isOwner = requesterId && String(recipe.authorId) === String(requesterId);
     if (!recipe.isPublished && !isOwner) throw new HttpError(403, 'Forbidden');
 
-    return recipe;
+    return toRecipeDto(recipe);
   },
 
   async update(authorId: string, id: string, payload: any) {
@@ -85,7 +87,7 @@ export const recipeService = {
 
     if (!recipe) throw new HttpError(404, 'Recipe not found (or not owner)');
 
-    return recipe;
+    return toRecipeDto(recipe);
   },
 
   async remove(authorId: string, id: string) {
@@ -102,16 +104,12 @@ export const recipeService = {
 
     const filter: any = {};
 
-    // publication rule:
-    // - public: only published
-    // - authenticated: allow published + own drafts
     if (!requesterId) {
       filter.isPublished = true;
     } else {
       filter.$or = [{ isPublished: true }, { authorId: new Types.ObjectId(requesterId) }];
     }
 
-    // explicit isPublished filter
     if (query.isPublished === 'true') filter.isPublished = true;
     if (query.isPublished === 'false') filter.isPublished = false;
 
@@ -132,32 +130,27 @@ export const recipeService = {
       if (!Number.isNaN(mr)) filter.rating = { $gte: mr };
     }
 
-    // text search
-    const findQuery = Recipe.find(query.q ? { ...filter, $text: { $search: query.q } } : filter);
+    const mongoQuery = query.q ? { ...filter, $text: { $search: query.q } } : filter;
+    const findQuery = Recipe.find(mongoQuery);
 
-    // sort
     const sort: Record<string, SortOrder> =
       query.sort === 'rating'
         ? { rating: -1, reviewCount: -1 }
         : query.sort === 'duration'
           ? { duration: 1, createdAt: -1 }
-          : { createdAt: -1 }; // default: newest
+          : { createdAt: -1 };
 
     findQuery.sort(sort).skip(skip).limit(limit);
 
-    // If text search, you might want score
     if (query.q) {
       findQuery.select({ score: { $meta: 'textScore' } } as any);
       findQuery.sort({ score: { $meta: 'textScore' } } as any);
     }
 
-    const [items, total] = await Promise.all([
-      findQuery.lean(),
-      Recipe.countDocuments(query.q ? { ...filter, $text: { $search: query.q } } : filter),
-    ]);
+    const [items, total] = await Promise.all([findQuery.lean(), Recipe.countDocuments(mongoQuery)]);
 
     return {
-      items,
+      items: items.map(toRecipeDto),
       page,
       limit,
       total,

@@ -45,13 +45,22 @@ const nutritionPerPortionSchema = new Schema(
   { _id: false },
 );
 
+const recipeInstructionSchema = new Schema(
+  {
+    stepNumber: { type: Number, required: true, min: 1, unique: true },
+    description: { type: String, required: true, trim: true, maxlength: 1000 },
+    imagePath: { type: String, default: null },
+  },
+  { _id: false },
+);
+
 const recipeSchema = new Schema(
   {
     authorId: { type: Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, required: true, trim: true, maxlength: 200 },
     shortDescription: { type: String, required: true, trim: true, maxlength: 1000 },
     ingredients: { type: [ingredientSchema], required: true, default: [] },
-    instructions: { type: [String], required: true, default: [] },
+    instructions: { type: [recipeInstructionSchema], required: true, default: [] },
     mealType: { type: String, required: true, enum: MEAL_TYPES, index: true },
     difficulty: { type: String, enum: DIFFICULTIES },
     tags: { type: [String], default: [], index: true },
@@ -59,7 +68,7 @@ const recipeSchema = new Schema(
     nutritionPerPortion: { type: nutritionPerPortionSchema, required: false },
     duration: { type: Number, required: true, min: 1 },
     durationType: { type: String, required: true, enum: DURATION_TYPES },
-    imageUrl: { type: String, required: false, trim: true },
+    imagePath: { type: String, default: null },
     nutritionValues: { type: [nutritionValueSchema], required: false, default: undefined },
     isPublished: { type: Boolean, default: false, index: true },
     rating: { type: Number, default: 0, min: 0, max: 5, index: true },

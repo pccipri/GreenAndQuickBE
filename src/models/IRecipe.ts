@@ -30,22 +30,28 @@ export interface NutritionPerPortion {
   salt: number;
 }
 
+export interface IRecipeInstruction {
+  stepNumber: number;
+  description: string;
+  imagePath: string | null;
+}
+
 export interface IRecipe {
-  id: string;
+  _id: string;
   authorId: string;
   title: string;
   shortDescription: string;
   ingredients: Ingredient[];
-  instructions: string[];
+  instructions: IRecipeInstruction[];
   mealType: MealType;
-  difficulty?: Difficulty;
-  tags?: string[];
+  difficulty: Difficulty | null;
+  tags: string[] | null;
   servings: number;
-  nutritionPerPortion?: NutritionPerPortion;
+  nutritionPerPortion: NutritionPerPortion | null;
   duration: number;
   durationType: DurationType;
-  imageUrl?: string;
-  nutritionValues?: NutritionValue[];
+  imagePath: string | null;
+  nutritionValues: NutritionValue[] | null;
   isPublished: boolean;
   rating: number;
   reviewCount: number;
@@ -53,3 +59,10 @@ export interface IRecipe {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IRecipeDTO extends Omit<IRecipe, '_id' | 'imagePath | instructions.imagePath'> {
+  id: string;
+  imageUrl: string | null;
+}
+
+export type ICreateRecipeDTO = Omit<IRecipe, '_id' | 'createdAt' | 'updatedAt'>;
