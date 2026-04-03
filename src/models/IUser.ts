@@ -13,6 +13,7 @@ export interface IUser {
   createdAt: Date;
   updatedAt: Date;
   phoneNumber: string | null;
+  googleId: string | null;
   isVerified: boolean;
 }
 

@@ -12,8 +12,6 @@ const REQUIRED_BUCKETS: RequiredBucket[] = [
 ];
 
 export async function ensureStorageBuckets(): Promise<void> {
-  console.log('this is the env: ', supaEnv);
-
   const { data: buckets, error } = await supabase.storage.listBuckets();
 
   if (error) {

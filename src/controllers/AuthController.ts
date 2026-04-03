@@ -14,6 +14,9 @@ import { TokenParams } from '@/models/generic/Routes';
 
 const router = express.Router();
 
+const SUCCESS_URL_GOOGLE_CALLBACK = process.env.SUCCESS_URL_GOOGLE_CALLBACK!;
+const FAILURE_URL_GOOGLE_CALLBACK = process.env.FAILURE_URL_GOOGLE_CALLBACK!;
+
 router.post('/login', (req, res, next) => {
   passport.authenticate(
     'local',
@@ -136,4 +139,27 @@ router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) =
   res.json({ message: 'Email verified successfully' });
   return;
 });
+
+// Step 1: Redirect user to Google
+router.get(
+  '/google',
+  passport.authenticate('google', { scope: ['profile', 'email'], session: false }),
+);
+
+// Step 2: Google redirects back here
+router.get(
+  '/google/callback',
+  passport.authenticate('google', {
+    session: false,
+    failureRedirect: `${FAILURE_URL_GOOGLE_CALLBACK}/oauth`,
+  }),
+  (req: Request, res: Response) => {
+    const user = req.user as IUser;
+    const token = generateAccessToken({ id: user._id });
+
+    // Send the JWT to your frontend via query param or a short-lived cookie
+    res.redirect(`${SUCCESS_URL_GOOGLE_CALLBACK}/${token}`);
+  },
+);
+
 export default router;

@@ -8,6 +8,8 @@ export function generateAccessToken(payload: object): string {
   return jwt.sign(payload, ACCESS_SECRET, { expiresIn: '10m' });
 }
 
+export const verifyToken = (token: string) => jwt.verify(token, ACCESS_SECRET) as { sub: string };
+
 export async function createRefreshToken(userId: string) {
   const token = crypto.randomBytes(40).toString('hex');
   const expiresAt = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000); // 4 days

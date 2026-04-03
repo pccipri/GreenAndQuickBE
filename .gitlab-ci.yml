@@ -1,0 +1,13 @@
+stages:
+  - mirror
+
+mirror-to-github:
+  stage: mirror
+  variables:
+    GIT_DEPTH: 0
+  script:
+    - git remote remove github || true
+    - git remote add github https://pccipri:$GH_ACCESS_TOKEN@github.com/pccipri/GreenAndQuickBE.git
+    - git push github HEAD:main --force
+  only:
+    - dev
