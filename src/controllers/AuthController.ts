@@ -5,17 +5,15 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { IVerifyOptions } from 'passport-local';
 import { requireAuth } from '../middlewares/isAuthenticated';
-import { createRefreshToken, generateAccessToken } from '../utils/tokens';
+import { createRefreshToken, generateAccessToken, rotateRefreshToken } from '../utils/tokens';
 import { RefreshToken } from '../schemas/RefreshTokenSchema';
 import { IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
 import { TokenParams } from '@/models/generic/Routes';
+import { configEnvs } from '@/config/env';
 
 const router = express.Router();
-
-const SUCCESS_URL_GOOGLE_CALLBACK = process.env.SUCCESS_URL_GOOGLE_CALLBACK!;
-const FAILURE_URL_GOOGLE_CALLBACK = process.env.FAILURE_URL_GOOGLE_CALLBACK!;
 
 router.post('/login', (req, res, next) => {
   passport.authenticate(
@@ -31,17 +29,15 @@ router.post('/login', (req, res, next) => {
       }
 
       // Access token
-      const accessToken = jwt.sign(
-        { id: user._id, email: user.email },
-        process.env.JWT_SECRET || 'supersecret',
-        { expiresIn: '15m' },
-      );
+      const accessToken = jwt.sign({ id: user._id, email: user.email }, configEnvs.ACCESS_SECRET, {
+        expiresIn: '15m',
+      });
 
       // Refresh token (DB + cookie)
       const refreshToken = await createRefreshToken(user._id.toString());
-      res.cookie('refreshToken', refreshToken.token, {
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: configEnvs.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 4 * 24 * 60 * 60 * 1000,
       });
@@ -53,39 +49,16 @@ router.post('/login', (req, res, next) => {
 
 router.post('/refreshToken', async (req: Request, res: Response) => {
   try {
-    if (!req.cookies || !req.cookies.refreshToken) {
+    if (!req.cookies?.refreshToken) {
       res.status(401).json({ error: 'No refresh token' });
       return;
     }
 
-    const refreshTokenValue = req.cookies.refreshToken;
-    const storedToken = await RefreshToken.findOne({ token: refreshTokenValue, isValid: true });
+    const { accessToken, refreshToken } = await rotateRefreshToken(req.cookies.refreshToken);
 
-    if (!storedToken) {
-      res.status(403).json({ error: 'Invalid or expired refresh token' });
-      return;
-    }
-
-    if (storedToken.expiresAt < new Date()) {
-      storedToken.isValid = false;
-      await storedToken.save();
-      res.status(403).json({ error: 'Refresh token expired' });
-      return;
-    }
-
-    // Rotate: invalidate old token
-    storedToken.isValid = false;
-    await storedToken.save();
-
-    // Issue new tokens
-    const payload = { id: storedToken.userId };
-    const accessToken = generateAccessToken(payload);
-    const newRefreshToken = await createRefreshToken(storedToken.userId.toString());
-
-    // Send new refresh in cookie
-    res.cookie('refreshToken', newRefreshToken.token, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: configEnvs.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 4 * 24 * 60 * 60 * 1000,
     });
@@ -93,7 +66,7 @@ router.post('/refreshToken', async (req: Request, res: Response) => {
     res.json({ accessToken });
   } catch (e) {
     console.error('refreshToken error:', e);
-    res.status(500).json({ error: 'Server error' });
+    res.status(403).json({ error: 'Invalid or expired refresh token' });
   }
 });
 
@@ -151,14 +124,14 @@ router.get(
   '/google/callback',
   passport.authenticate('google', {
     session: false,
-    failureRedirect: `${FAILURE_URL_GOOGLE_CALLBACK}/oauth`,
+    failureRedirect: `${configEnvs.FAILURE_URL_GOOGLE_CALLBACK}/oauth`,
   }),
   (req: Request, res: Response) => {
     const user = req.user as IUser;
-    const token = generateAccessToken({ id: user._id });
+    const token = generateAccessToken(user._id.toString());
 
     // Send the JWT to your frontend via query param or a short-lived cookie
-    res.redirect(`${SUCCESS_URL_GOOGLE_CALLBACK}/${token}`);
+    res.redirect(`${configEnvs.SUCCESS_URL_GOOGLE_CALLBACK}/${token}`);
   },
 );
 

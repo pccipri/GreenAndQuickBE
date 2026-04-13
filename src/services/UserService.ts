@@ -1,14 +1,14 @@
+import { hashPassword } from '@/utils/encryption';
 import { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
-import { encrypt } from '../utils/encryption';
 import { sendVerificationEmail } from '../utils/mailer';
 import { generateVerificationToken } from '../utils/tokens';
 
 export const createUser = async (userToSave: ICreateUserDTO) => {
   const newUser = new User({
     ...userToSave,
-    password: encrypt(userToSave.password),
+    password: await hashPassword(userToSave.password),
     role: 'user',
   });
 

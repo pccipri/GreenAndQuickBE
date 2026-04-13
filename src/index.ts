@@ -1,5 +1,6 @@
 import express from 'express';
 import { connectToDatabase } from './config/db';
+import { configEnvs } from './config/env';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
@@ -12,23 +13,14 @@ import { ensureStorageBuckets } from './libs/supabase/supabaseBuckets';
 
 dotenv.config();
 
-const PORT = process.env.PORT || 3001;
-const name = process.env.MONGODB_USERNAME || 'username';
-const password = process.env.MONGODB_PASSWORD || 'password';
-const dbName = process.env.MONGODB_DB_NAME || 'dbName';
-const ALLOWED_URL = process.env.CORS_WHITELIST_URL || '';
-export const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
-export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key';
-export const PASSPORT_SECRET = process.env.PASSPORT_SECRET || 'mySecret';
-
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'api_key_placeholder');
+export const stripe = new Stripe(configEnvs.STRIPE_SECRET_KEY);
 
 const app = express();
 
 app.use(express.json());
 
 const corsOptions = {
-  origin: ALLOWED_URL,
+  origin: configEnvs.CORS_WHITELIST_URL,
   credentials: true,
   optionsSuccessStatus: 200, // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
@@ -48,11 +40,11 @@ app.use(errorHandler);
 
 app.use('/api', apiController);
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.listen(configEnvs.PORT, () => {
+  console.log(`Server is running on port ${configEnvs.PORT}`);
 
   connectToDatabase(
-    `mongodb+srv://${name}:${password}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${dbName}`,
+    `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_DB_NAME}`,
   );
   ensureStorageBuckets().catch((error) => {
     console.error(error);

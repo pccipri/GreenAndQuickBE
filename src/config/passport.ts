@@ -5,7 +5,7 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { isPasswordValid } from '../utils/encryption';
 import { User } from '../schemas/UserSchema';
 import { getUserById } from '../services/UserService';
-
+import { configEnvs } from './env';
 // Local strategy
 passport.use(
   new LocalStrategy(
@@ -35,8 +35,8 @@ passport.use(
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientID: configEnvs.GOOGLE_CLIENT_ID,
+      clientSecret: configEnvs.GOOGLE_CLIENT_SECRET,
       callbackURL: 'http://localhost:8080/api/auth/google/callback',
     },
     async (_accessToken, _refreshToken, profile: Profile, done) => {
@@ -79,11 +79,12 @@ passport.use(
   new JwtStrategy(
     {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET || 'supersecret',
+      secretOrKey: configEnvs.ACCESS_SECRET,
     },
     async (payload, done) => {
       try {
-        const user = await User.findById(payload.id).select('-password');
+        if (!payload?.sub) return done(null, false);
+        const user = await User.findById(payload.sub).select('-password');
         if (!user) return done(null, false);
         return done(null, user);
       } catch (err) {
@@ -92,18 +93,4 @@ passport.use(
     },
   ),
 );
-
-passport.serializeUser((user: any, done) => {
-  done(null, user._id);
-});
-
-passport.deserializeUser(async (id: string, done) => {
-  try {
-    const user = await getUserById(id);
-    done(null, user);
-  } catch (error) {
-    done(error, null);
-  }
-});
-
 export default passport;

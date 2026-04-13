@@ -1,8 +1,9 @@
 import bodyParser from 'body-parser';
 import { Response, Request, Router } from 'express';
 import Stripe from 'stripe';
-import { stripe, STRIPE_WEBHOOK_SECRET } from '..';
+import { stripe } from '..';
 import path from 'path';
+import { configEnvs } from '@/config/env';
 
 const router = Router();
 
@@ -119,7 +120,7 @@ router.post(
       event = stripe.webhooks.constructEvent(
         req.body,
         req.headers['stripe-signature']!,
-        STRIPE_WEBHOOK_SECRET,
+        configEnvs.STRIPE_SECRET_KEY,
       );
     } catch (err) {
       console.log(`⚠️  Webhook signature verification failed.`);
