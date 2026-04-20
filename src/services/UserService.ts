@@ -1,9 +1,11 @@
 import { hashPassword } from '@/utils/encryption';
 import { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
+import { PasswordResetToken } from '../schemas/PasswordResetTokenSchema';
 import { User } from '../schemas/UserSchema';
-import { sendVerificationEmail } from '../utils/mailer';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/mailer';
 import { generateVerificationToken } from '../utils/tokens';
+import crypto from 'crypto';
 
 export const createUser = async (userToSave: ICreateUserDTO) => {
   const newUser = new User({
@@ -51,4 +53,56 @@ export const updateUser = async (id: string, modifiedUserData: Partial<IUser>) =
 export const deleteUser = async (id: string) => {
   const deleted = await User.findByIdAndDelete(id);
   return !!deleted;
+};
+
+export const requestPasswordReset = async (email: string) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    // Return success to avoid leaking user existence
+    return { success: true };
+  }
+
+  // Generate token
+  const { token, hashedToken } = generateVerificationToken();
+
+  // Save hashed token
+  await PasswordResetToken.create({
+    userId: user._id,
+    tokenHash: hashedToken,
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+  });
+
+  // Send email
+  await sendPasswordResetEmail(email, token);
+
+  return { success: true };
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  // Hash incoming token
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+  // Find token record
+  const record = await PasswordResetToken.findOne({
+    tokenHash,
+    expiresAt: { $gt: new Date() },
+  });
+
+  if (!record) {
+    // Token not found or expired
+    const maybeExpired = await PasswordResetToken.findOne({ tokenHash });
+    if (maybeExpired) {
+      await PasswordResetToken.deleteOne({ _id: maybeExpired._id });
+    }
+    return { success: false, message: 'Invalid or expired token' };
+  }
+
+  // Update user password
+  const hashedPassword = await hashPassword(newPassword);
+  await User.findByIdAndUpdate(record.userId, { password: hashedPassword });
+
+  // Clean up all reset tokens for this user
+  await PasswordResetToken.deleteMany({ userId: record.userId });
+
+  return { success: true };
 };

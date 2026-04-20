@@ -12,6 +12,7 @@ import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
 import { TokenParams } from '@/models/generic/Routes';
 import { configEnvs } from '@/config/env';
+import { requestPasswordReset, resetPassword } from '../services/UserService';
 
 const router = express.Router();
 
@@ -134,5 +135,28 @@ router.get(
     res.redirect(`${configEnvs.SUCCESS_URL_GOOGLE_CALLBACK}/${token}`);
   },
 );
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+
+  await requestPasswordReset(email);
+  res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+});
+
+router.post('/reset-password', async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res.status(400).json({ error: 'Token and password are required' });
+  }
+
+  const result = await resetPassword(token, password);
+  if (!result.success) {
+    return res.status(400).json({ error: result.message });
+  }
+
+  res.json({ message: 'Password reset successfully' });
+});
 
 export default router;

@@ -35,6 +35,7 @@ export const configEnvs = {
   SMTP_SERVICE: requireEnv('SMTP_SERVICE'),
   SMTP_USER: requireEnv('SMTP_USER'),
   SMTP_PASS: requireEnv('SMTP_PASS'),
+  PASSWORD_RESET_URL: requireEnv('PASSWORD_RESET_URL'),
   // TO-DO: Investigate the STATIC_DIR variable usage and decide if it should be added here or handled differently
   // STATIC_DIR: requireEnv('STATIC_DIR'),
 };

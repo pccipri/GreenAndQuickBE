@@ -32,3 +32,13 @@ export async function sendVerificationEmail(email: string, token: string) {
     html: `<p>Click <a href="${url}">here</a> to verify your account. Link expires in 1h.</p>`,
   });
 }
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const url = `${configEnvs.PASSWORD_RESET_URL}/${token}`;
+  await transporter.sendMail({
+    from: configEnvs.SMTP_USER,
+    to: email,
+    subject: 'Reset Your Password',
+    html: `<p>Click <a href="${url}">here</a> to reset your password. Link expires in 15 minutes.</p>`,
+  });
+}
