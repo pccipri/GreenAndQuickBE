@@ -13,6 +13,7 @@ import { User } from '../schemas/UserSchema';
 import { TokenParams } from '@/models/generic/Routes';
 import { configEnvs } from '@/config/env';
 import { requestPasswordReset, resetPassword } from '../services/UserService';
+import { toUserDto } from '../presenters/UserPresenter';
 
 const router = express.Router();
 
@@ -22,12 +23,15 @@ router.post('/login', (req, res, next) => {
     { session: false },
     async (err: Error | null, user: IUser | false, info: IVerifyOptions | undefined) => {
       if (err) return next(err);
-      if (!user) return res.status(401).json({ error: info?.message || 'Login failed' });
+      if (!user) return res.status(401).json({ error: info?.message || 'auth.loginFailed' });
 
       // 🔹 Check if email is verified
       if (!user.isVerified) {
-        return res.status(403).json({ error: 'Please verify your email before logging in.' });
+        return res.status(403).json({ error: 'auth.emailNotVerified' });
       }
+
+      // Fetch user with populated userSettings
+      const userWithSettings = await User.findById(user._id, '-password').populate('userSettings');
 
       // Access token
       const accessToken = jwt.sign({ id: user._id, email: user.email }, configEnvs.ACCESS_SECRET, {
@@ -43,7 +47,11 @@ router.post('/login', (req, res, next) => {
         maxAge: 4 * 24 * 60 * 60 * 1000,
       });
 
-      res.json({ message: 'Login successful', accessToken });
+      res.json({
+        message: 'Login successful',
+        accessToken,
+        user: toUserDto(userWithSettings as any),
+      });
     },
   )(req, res, next);
 });
@@ -51,7 +59,7 @@ router.post('/login', (req, res, next) => {
 router.post('/refreshToken', async (req: Request, res: Response) => {
   try {
     if (!req.cookies?.refreshToken) {
-      res.status(401).json({ error: 'No refresh token' });
+      res.status(401).json({ error: 'auth.noRefreshToken' });
       return;
     }
 
@@ -67,7 +75,7 @@ router.post('/refreshToken', async (req: Request, res: Response) => {
     res.json({ accessToken });
   } catch (e) {
     console.error('refreshToken error:', e);
-    res.status(403).json({ error: 'Invalid or expired refresh token' });
+    res.status(403).json({ error: 'auth.invalidRefreshToken' });
   }
 });
 
@@ -80,8 +88,16 @@ router.post('/logout', async (req: Request, res: Response) => {
   res.json({ message: 'Logged out' });
 });
 
-router.get('/getLoggedUser', requireAuth, (req: Request, res: Response) => {
-  res.json({ message: 'Logged user data', user: req.user });
+router.get('/getLoggedUser', requireAuth, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById((req.user as any)._id, '-password').populate('userSettings');
+    if (!user) {
+      return res.status(404).json({ error: 'user.notFound' });
+    }
+    res.json({ message: 'Logged user data', user });
+  } catch (error: any) {
+    res.status(500).json({ error: 'auth.fetchUserFailed' });
+  }
 });
 
 router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) => {
@@ -102,7 +118,7 @@ router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) =
     if (maybeExpired) {
       await EmailConfirmationToken.deleteOne({ _id: maybeExpired._id });
     }
-    res.status(400).json({ message: 'Invalid or expired token' });
+    res.status(400).json({ error: 'auth.invalidToken' });
     return;
   }
 
@@ -138,7 +154,7 @@ router.get(
 router.post('/forgot-password', async (req: Request, res: Response) => {
   const { email } = req.body;
   if (!email) {
-    return res.status(400).json({ error: 'Email is required' });
+    return res.status(400).json({ error: 'auth.emailRequired' });
   }
 
   await requestPasswordReset(email);
@@ -148,7 +164,7 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
 router.post('/reset-password', async (req: Request, res: Response) => {
   const { token, password } = req.body;
   if (!token || !password) {
-    return res.status(400).json({ error: 'Token and password are required' });
+    return res.status(400).json({ error: 'auth.tokenAndPasswordRequired' });
   }
 
   const result = await resetPassword(token, password);

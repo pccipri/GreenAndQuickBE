@@ -1,0 +1,8 @@
+{
+  "orderConfirmed": "Your order has been confirmed",
+  "orderReady": "Your order is ready for pickup",
+  "orderDelivered": "Your order has been delivered",
+  "paymentReceived": "Payment received successfully",
+  "accountVerified": "Your account has been verified",
+  "passwordChanged": "Your password has been changed successfully"
+}

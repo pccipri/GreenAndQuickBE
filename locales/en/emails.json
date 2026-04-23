@@ -1,0 +1,8 @@
+{
+  "verifySubject": "Verify Your Account",
+  "verifyBody": "Hello {{userName}},\n\nPlease verify your account by clicking the link below:\n{{link}}\n\nThis link expires in 1 hour.\n\nIf you didn't create an account, please ignore this email.",
+  "resetPasswordSubject": "Reset Your Password",
+  "resetPasswordBody": "Hello {{userName}},\n\nYou requested a password reset. Click the link below to reset your password:\n{{link}}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.",
+  "welcomeSubject": "Welcome to Green Quick!",
+  "welcomeBody": "Hello {{userName}},\n\nWelcome to Green Quick! Your account has been successfully created.\n\nYou can now start exploring our platform."
+}

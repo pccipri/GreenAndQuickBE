@@ -1,4 +1,4 @@
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document, Types } from 'mongoose';
 import { addressSchema } from './AddressSchema';
 
 const { Schema } = mongoose;
@@ -12,6 +12,7 @@ export interface UserDocument extends Document {
   lastName: string;
   phoneNumber: string;
   addresses: (typeof addressSchema)[];
+  userSettings?: Types.ObjectId;
   isVerified: boolean;
   googleId: string | null;
   createdAt: Date;
@@ -29,6 +30,11 @@ const userSchema = new Schema<UserDocument>(
     lastName: { type: String, required: false },
     phoneNumber: { type: String, required: false, unique: true, sparse: true },
     addresses: [addressSchema],
+    userSettings: {
+      type: Schema.Types.ObjectId,
+      ref: 'UserSettings',
+      required: false,
+    },
     isVerified: { type: Boolean, default: false },
     googleId: {
       type: String,

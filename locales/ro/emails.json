@@ -1,0 +1,8 @@
+{
+  "verifySubject": "Verifică-ți Contul",
+  "verifyBody": "Salut {{userName}},\n\nTe rugăm să verifici contul tău făcând clic pe link-ul de mai jos:\n{{link}}\n\nAcest link expiră în 1 oră.\n\nDacă nu ai creat un cont, te rugăm să ignori acest email.",
+  "resetPasswordSubject": "Resetează-ți Parola",
+  "resetPasswordBody": "Salut {{userName}},\n\nAi solicitat resetarea parolei. Fă clic pe link-ul de mai jos pentru a reseta parola:\n{{link}}\n\nAcest link expiră în 15 minute.\n\nDacă nu ai solicitat acest lucru, te rugăm să ignori acest email.",
+  "welcomeSubject": "Bine ai venit la Green Quick!",
+  "welcomeBody": "Salut {{userName}},\n\nBine ai venit la Green Quick! Contul tău a fost creat cu succes.\n\nAcum poți începe să explorezi platforma noastră."
+}

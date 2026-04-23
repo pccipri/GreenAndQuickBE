@@ -10,6 +10,7 @@ import cookieParser from 'cookie-parser';
 import passport from './config/passport';
 import { errorHandler } from './middlewares/errorHandler';
 import { ensureStorageBuckets } from './libs/supabase/supabaseBuckets';
+import './config/i18n'; // Initialize i18n
 
 dotenv.config();
 

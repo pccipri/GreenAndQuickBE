@@ -1,0 +1,14 @@
+{
+  "invoiceTitle": "Invoice",
+  "orderNumber": "Order Number",
+  "date": "Date",
+  "customer": "Customer",
+  "items": "Items",
+  "quantity": "Quantity",
+  "price": "Price",
+  "total": "Total",
+  "subtotal": "Subtotal",
+  "tax": "Tax",
+  "grandTotal": "Grand Total",
+  "thankYou": "Thank you for your business!"
+}

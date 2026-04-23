@@ -8,6 +8,7 @@ import {
   getUsersByRole,
   updateUser,
 } from '../services/UserService';
+import { getUserSettingsByUserId, updateUserSettings } from '@/services/UserSettingsService';
 import { IdParams, RoleParams } from '@/models/generic/Routes';
 import {
   deletePublicImage,
@@ -23,9 +24,10 @@ const router = express.Router();
 // Create a user
 router.post('/', upload.single('avatar'), async (req: Request, res: Response) => {
   try {
-    const user: ICreateUserDTO = { ...req.body };
+    const { preferredLanguage, ...userData } = req.body as any;
+    const user: ICreateUserDTO = { ...userData };
 
-    const userId = await createUser(user);
+    const userId = await createUser(user, preferredLanguage);
 
     if (req.file) {
       const uploadedAvatar = await uploadPublicImage({
@@ -41,12 +43,50 @@ router.post('/', upload.single('avatar'), async (req: Request, res: Response) =>
     res.status(201).json({
       id: userId,
       message: 'User registered. Check email for verification link.',
+      preferredLanguage: preferredLanguage || 'en',
     });
   } catch (error: any) {
     res.status(500).json({
       message: 'Failed to create user',
       error: error.message,
     });
+  }
+});
+
+router.get('/:id/settings', async (req: Request<IdParams>, res: Response) => {
+  try {
+    const user = await getUserById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'user.notFound' });
+    }
+
+    const settings = await getUserSettingsByUserId(req.params.id);
+    if (!settings) {
+      return res.status(404).json({ error: 'user.settingsNotFound' });
+    }
+
+    res.json(settings);
+  } catch (error: any) {
+    res.status(500).json({ error: 'user.fetchSettingsFailed' });
+  }
+});
+
+router.put('/:id/settings', async (req: Request<IdParams>, res: Response) => {
+  try {
+    const { preferredLanguage, currency } = req.body;
+    if (!preferredLanguage) {
+      return res.status(400).json({ error: 'user.preferredLanguageRequired' });
+    }
+
+    const user = await getUserById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'user.notFound' });
+    }
+
+    const updatedSettings = await updateUserSettings(req.params.id, preferredLanguage, currency);
+    res.json(updatedSettings);
+  } catch (error: any) {
+    res.status(500).json({ error: 'user.updateSettingsFailed' });
   }
 });
 
@@ -59,7 +99,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
     res.json(usersWithAvatarUrl);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch users', error: error.message });
+    res.status(500).json({ error: 'user.fetchAllFailed' });
   }
 });
 
@@ -72,7 +112,7 @@ router.get('/role/:role', async (req: Request<RoleParams>, res: Response) => {
 
     res.json(usersWithAvatarUrl);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch users by role', error: error.message });
+    res.status(500).json({ error: 'user.fetchByRoleFailed' });
   }
 });
 
@@ -82,12 +122,12 @@ router.get('/:id', async (req: Request<IdParams>, res: Response) => {
     const user: UserDocument | null = await getUserById(req.params.id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'user.notFound' });
     }
 
     res.json(toUserDto(user));
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch user', error: error.message });
+    res.status(500).json({ error: 'user.fetchFailed' });
   }
 });
 
@@ -97,7 +137,7 @@ router.put('/:id', upload.single('avatar'), async (req: Request<IdParams>, res: 
     const existingUser: UserDocument | null = await getUserById(req.params.id);
 
     if (!existingUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'user.notFound' });
     }
 
     const payload: any = { ...req.body };
@@ -139,15 +179,12 @@ router.put('/:id', upload.single('avatar'), async (req: Request<IdParams>, res: 
     const updated: UserDocument | null = await updateUser(req.params.id, payload);
 
     if (!updated) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'user.notFound' });
     }
 
     res.json(toUserDto(updated));
   } catch (error: any) {
-    res.status(500).json({
-      message: 'Failed to update user',
-      error: error.message,
-    });
+    res.status(500).json({ error: 'user.updateFailed' });
   }
 });
 
@@ -157,13 +194,13 @@ router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
     const existingUser: UserDocument | null = await getUserById(req.params.id);
 
     if (!existingUser) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'user.notFound' });
     }
 
     const deleted = await deleteUser(req.params.id);
 
     if (!deleted) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ error: 'user.notFound' });
     }
 
     if (existingUser.avatarPath) {
@@ -172,7 +209,7 @@ router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
 
     res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete user', error: error.message });
+    res.status(500).json({ error: 'user.deleteFailed' });
   }
 });
 

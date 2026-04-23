@@ -3,11 +3,14 @@ import { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { PasswordResetToken } from '../schemas/PasswordResetTokenSchema';
 import { User } from '../schemas/UserSchema';
+import { UserSettings } from '../schemas/UserSettingsSchema';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/mailer';
 import { generateVerificationToken } from '../utils/tokens';
+import { sanitizeLanguage } from '../utils/languageValidator';
 import crypto from 'crypto';
 
-export const createUser = async (userToSave: ICreateUserDTO) => {
+export const createUser = async (userToSave: ICreateUserDTO, preferredLanguage: string = 'en') => {
+  const language = sanitizeLanguage(preferredLanguage);
   const newUser = new User({
     ...userToSave,
     password: await hashPassword(userToSave.password),
@@ -15,6 +18,13 @@ export const createUser = async (userToSave: ICreateUserDTO) => {
   });
 
   const response = await newUser.save();
+
+  const userSettings = await UserSettings.create({
+    userId: response._id,
+    preferredLanguage: language,
+  });
+
+  await User.findByIdAndUpdate(response._id, { userSettings: userSettings._id });
 
   // Create verification token
   const { token, hashedToken } = generateVerificationToken();
@@ -25,23 +35,23 @@ export const createUser = async (userToSave: ICreateUserDTO) => {
   });
 
   // Send email
-  await sendVerificationEmail(response.email, token);
+  await sendVerificationEmail(response.email, token, language, response.username ?? response.email);
 
   return response._id;
 };
 
 export const getAllUsers = async () => {
-  const users = await User.find({}, '-password');
+  const users = await User.find({}, '-password').populate('userSettings');
   return users;
 };
 
 export const getUsersByRole = async (role: string) => {
-  const users = await User.find({ role }, '-password');
+  const users = await User.find({ role }, '-password').populate('userSettings');
   return users;
 };
 
 export const getUserById = async (id: string) => {
-  const user = await User.findById(id, '-password');
+  const user = await User.findById(id, '-password').populate('userSettings');
   return user || null;
 };
 
@@ -62,6 +72,9 @@ export const requestPasswordReset = async (email: string) => {
     return { success: true };
   }
 
+  const userSettings = await UserSettings.findOne({ userId: user._id });
+  const language = userSettings?.preferredLanguage ?? 'en';
+
   // Generate token
   const { token, hashedToken } = generateVerificationToken();
 
@@ -73,7 +86,7 @@ export const requestPasswordReset = async (email: string) => {
   });
 
   // Send email
-  await sendPasswordResetEmail(email, token);
+  await sendPasswordResetEmail(email, token, language, user.username ?? email);
 
   return { success: true };
 };

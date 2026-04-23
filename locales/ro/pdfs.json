@@ -1,0 +1,14 @@
+{
+  "invoiceTitle": "Factură",
+  "orderNumber": "Număr Comandă",
+  "date": "Data",
+  "customer": "Client",
+  "items": "Articole",
+  "quantity": "Cantitate",
+  "price": "Preț",
+  "total": "Total",
+  "subtotal": "Subtotal",
+  "tax": "Taxă",
+  "grandTotal": "Total General",
+  "thankYou": "Vă mulțumim pentru afaceri!"
+}

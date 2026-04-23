@@ -1,5 +1,7 @@
 import nodemailer, { Transporter, SendMailOptions } from 'nodemailer';
 import dotenv from 'dotenv';
+import i18next from 'i18next';
+import '../config/i18n';
 import { configEnvs } from '@/config/env';
 
 dotenv.config();
@@ -23,22 +25,52 @@ export const sendEmail = async (to: string, subject: string, text: string): Prom
   await transporter.sendMail(mailOptions);
 };
 
-export async function sendVerificationEmail(email: string, token: string) {
+export async function sendVerificationEmail(
+  email: string,
+  token: string,
+  language: string = 'en',
+  userName: string = 'there',
+) {
   const url = `http://localhost:3000/auth/verifyRegister/${token}`;
+  const subject = i18next.t('verifySubject', { ns: 'emails', lng: language });
+  const body = i18next
+    .t('verifyBody', {
+      ns: 'emails',
+      lng: language,
+      userName,
+      link: url,
+    })
+    .replace(/\n/g, '<br/>');
+
   await transporter.sendMail({
     from: configEnvs.SMTP_USER,
     to: email,
-    subject: 'Verify Your Account',
-    html: `<p>Click <a href="${url}">here</a> to verify your account. Link expires in 1h.</p>`,
+    subject,
+    html: `<div>${body}</div>`,
   });
 }
 
-export async function sendPasswordResetEmail(email: string, token: string) {
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string,
+  language: string = 'en',
+  userName: string = 'there',
+) {
   const url = `${configEnvs.PASSWORD_RESET_URL}/${token}`;
+  const subject = i18next.t('resetPasswordSubject', { ns: 'emails', lng: language });
+  const body = i18next
+    .t('resetPasswordBody', {
+      ns: 'emails',
+      lng: language,
+      userName,
+      link: url,
+    })
+    .replace(/\n/g, '<br/>');
+
   await transporter.sendMail({
     from: configEnvs.SMTP_USER,
     to: email,
-    subject: 'Reset Your Password',
-    html: `<p>Click <a href="${url}">here</a> to reset your password. Link expires in 15 minutes.</p>`,
+    subject,
+    html: `<div>${body}</div>`,
   });
 }

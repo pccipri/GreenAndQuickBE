@@ -1,4 +1,6 @@
 import IAddress from './IAddress';
+import { Types } from 'mongoose';
+import { IUserSettings } from './IUserSettings';
 
 export interface IUser {
   _id: string;
@@ -10,6 +12,7 @@ export interface IUser {
   lastName: string | null;
   avatarPath: string | null;
   addresses: IAddress[];
+  userSettings?: Types.ObjectId | IUserSettings;
   createdAt: Date;
   updatedAt: Date;
   phoneNumber: string | null;
@@ -17,9 +20,18 @@ export interface IUser {
   isVerified: boolean;
 }
 
-export interface UserDto extends Omit<IUser, '_id' | 'avatarPath' | 'password'> {
+export interface UserSettingsDto {
+  userId: string;
+  preferredLanguage: 'en' | 'ro';
+  currency?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserDto extends Omit<IUser, '_id' | 'avatarPath' | 'password' | 'userSettings'> {
   id: string;
   avatarUrl: string | null;
+  userSettings?: UserSettingsDto;
 }
 
 export type ICreateUserDTO = Omit<IUser, '_id' | 'createdAt' | 'updatedAt' | 'isVerified'>;
