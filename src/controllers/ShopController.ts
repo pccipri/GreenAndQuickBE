@@ -16,7 +16,7 @@ router.post('/', async (req: Request, res: Response) => {
     const shop = await createShop(req.body);
     res.status(201).json(shop);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to create shop', error: error.message });
+    res.status(400).json({ error: 'shop.createFailed' });
   }
 });
 
@@ -26,7 +26,7 @@ router.get('/', async (_req, res) => {
     const shops = await getAllShops();
     res.json(shops);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch shops', error: error.message });
+    res.status(500).json({ error: 'shop.fetchAllFailed' });
   }
 });
 
@@ -34,10 +34,10 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const shop = await getShopById(req.params.id);
-    if (!shop) res.status(404).json({ message: 'Shop not found' });
+    if (!shop) res.status(404).json({ error: 'shop.notFound' });
     res.json(shop);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch shop', error: error.message });
+    res.status(500).json({ error: 'shop.fetchFailed' });
   }
 });
 
@@ -45,10 +45,10 @@ router.get('/:id', async (req, res) => {
 router.get('/owner/:owner', async (req, res) => {
   try {
     const shop = await getShopByOwner(req.params.owner);
-    if (!shop) res.status(404).json({ message: 'Shop not found for this owner' });
+    if (!shop) res.status(404).json({ error: 'shop.notFoundForOwner' });
     res.json(shop);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch owner shop', error: error.message });
+    res.status(500).json({ error: 'shop.fetchByOwnerFailed' });
   }
 });
 
@@ -56,10 +56,10 @@ router.get('/owner/:owner', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const updated = await updateShop(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Shop not found' });
+    if (!updated) res.status(404).json({ error: 'shop.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to update shop', error: error.message });
+    res.status(400).json({ error: 'shop.updateFailed' });
   }
 });
 
@@ -67,10 +67,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const success = await deleteShop(req.params.id);
-    if (!success) res.status(404).json({ message: 'Shop not found' });
+    if (!success) res.status(404).json({ error: 'shop.notFound' });
     res.json({ message: 'Shop deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete shop', error: error.message });
+    res.status(500).json({ error: 'shop.deleteFailed' });
   }
 });
 

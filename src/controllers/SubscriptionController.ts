@@ -16,7 +16,7 @@ router.post('/', async (req: Request, res: Response) => {
     const subscription = await createSubscription(req.body);
     res.status(201).json(subscription);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to create subscription', error: error.message });
+    res.status(400).json({ error: 'subscription.createFailed' });
   }
 });
 
@@ -26,7 +26,7 @@ router.get('/', async (_req, res) => {
     const subscriptions = await getAllSubscriptions();
     res.json(subscriptions);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch subscriptions', error: error.message });
+    res.status(500).json({ error: 'subscription.fetchAllFailed' });
   }
 });
 
@@ -34,10 +34,10 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const subscription = await getSubscriptionById(req.params.id);
-    if (!subscription) res.status(404).json({ message: 'Subscription not found' });
+    if (!subscription) res.status(404).json({ error: 'subscription.notFound' });
     res.json(subscription);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch subscription', error: error.message });
+    res.status(500).json({ error: 'subscription.fetchFailed' });
   }
 });
 
@@ -47,7 +47,7 @@ router.get('/user/:userId', async (req, res) => {
     const subscriptions = await getSubscriptionsByUser(req.params.userId);
     res.json(subscriptions);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch user subscriptions', error: error.message });
+    res.status(500).json({ error: 'subscription.fetchByUserFailed' });
   }
 });
 
@@ -55,10 +55,10 @@ router.get('/user/:userId', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const updated = await updateSubscription(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Subscription not found' });
+    if (!updated) res.status(404).json({ error: 'subscription.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to update subscription', error: error.message });
+    res.status(400).json({ error: 'subscription.updateFailed' });
   }
 });
 
@@ -66,10 +66,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const success = await deleteSubscription(req.params.id);
-    if (!success) res.status(404).json({ message: 'Subscription not found' });
+    if (!success) res.status(404).json({ error: 'subscription.notFound' });
     res.json({ message: 'Subscription deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete subscription', error: error.message });
+    res.status(500).json({ error: 'subscription.deleteFailed' });
   }
 });
 

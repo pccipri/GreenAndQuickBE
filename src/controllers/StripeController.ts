@@ -75,9 +75,7 @@ router.post('/create-payment-intent', async (req: Request, res: Response): Promi
     });
   } catch (e) {
     res.status(400).send({
-      error: {
-        message: 'boom',
-      },
+      error: 'stripe.paymentIntentFailed',
     });
   }
 });
@@ -124,7 +122,7 @@ router.post(
       );
     } catch (err) {
       console.log(`⚠️  Webhook signature verification failed.`);
-      res.sendStatus(400);
+      res.status(400).json({ error: 'stripe.webhookSignatureFailed' });
       return;
     }
 

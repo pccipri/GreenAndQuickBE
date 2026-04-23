@@ -19,7 +19,7 @@ router.post('/', async (req: Request, res: Response) => {
     const response = await createOrder(order);
     res.status(201).json(response);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create order', error: error.message });
+    res.status(500).json({ error: 'order.createFailed' });
   }
 });
 
@@ -29,7 +29,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const orders = await getAllOrders();
     res.json(orders);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+    res.status(500).json({ error: 'order.fetchAllFailed' });
   }
 });
 
@@ -38,11 +38,11 @@ router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const order = await getOrderById(req.params.id);
     if (!order) {
-      res.status(404).json({ message: 'Order not found' });
+      res.status(404).json({ error: 'order.notFound' });
     }
     res.json(order);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch order', error: error.message });
+    res.status(500).json({ error: 'order.fetchFailed' });
   }
 });
 
@@ -53,7 +53,7 @@ router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
     const orders = await getOrdersByUser(userId);
     res.json(orders);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
+    res.status(500).json({ error: 'order.fetchByUserFailed' });
   }
 });
 
@@ -62,11 +62,11 @@ router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updatedOrder = await updateOrder(req.params.id, req.body);
     if (!updatedOrder) {
-      res.status(404).json({ message: 'Order not found' });
+      res.status(404).json({ error: 'order.notFound' });
     }
     res.json(updatedOrder);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to update order', error: error.message });
+    res.status(500).json({ error: 'order.updateFailed' });
   }
 });
 
@@ -75,11 +75,11 @@ router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteOrder(req.params.id);
     if (!deleted) {
-      res.status(404).json({ message: 'Order not found' });
+      res.status(404).json({ error: 'order.notFound' });
     }
     res.json({ message: 'Order deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete order', error: error.message });
+    res.status(500).json({ error: 'order.deleteFailed' });
   }
 });
 

@@ -40,7 +40,7 @@ router.post('/', upload.single('image'), async (req: Request, res: Response) => 
 
     res.status(201).json({ id });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create product', error: error.message });
+    res.status(500).json({ error: 'product.createFailed' });
   }
 });
 
@@ -51,7 +51,7 @@ router.get('/', async (_req: Request, res: Response) => {
 
     res.json(products);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch products', error: error.message });
+    res.status(500).json({ error: 'product.fetchAllFailed' });
   }
 });
 
@@ -59,10 +59,10 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const product = await getProductById(req.params.id);
-    if (!product) res.status(404).json({ message: 'Product not found' });
+    if (!product) res.status(404).json({ error: 'product.notFound' });
     res.json(product);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch product', error: error.message });
+    res.status(500).json({ error: 'product.fetchFailed' });
   }
 });
 
@@ -73,7 +73,7 @@ router.get('/shop/:id', async (req: Request<IdParams>, res: Response) => {
     const products = await getProductsByShop(shopId);
     res.json(products);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch products by shop', error: error.message });
+    res.status(500).json({ error: 'product.fetchByShopFailed' });
   }
 });
 
@@ -84,7 +84,7 @@ router.get('/category/:id', async (req: Request<IdParams>, res: Response) => {
     const products = await getProductsByCategory(categoryId);
     res.json(products);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch products by category', error: error.message });
+    res.status(500).json({ error: 'product.fetchByCategoryFailed' });
   }
 });
 
@@ -93,13 +93,13 @@ router.get('/search', async (req: Request, res: Response) => {
   try {
     const { q } = req.query;
     if (typeof q !== 'string') {
-      res.status(400).json({ message: 'Query must be a string' });
+      res.status(400).json({ error: 'product.invalidQuery' });
     }
 
     const products = await searchProductsByName(q as string);
     res.json(products);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to search products', error: error.message });
+    res.status(500).json({ error: 'product.searchFailed' });
   }
 });
 
@@ -112,7 +112,7 @@ router.put('/:id', upload.single('image'), async (req: Request<IdParams>, res: R
     )) as ProductDocument;
 
     if (!existingProduct) {
-      return res.status(404).json({ message: 'Product not found' });
+      return res.status(404).json({ error: 'product.notFound' });
     }
 
     const payload: any = { ...req.body };
@@ -152,10 +152,10 @@ router.put('/:id', upload.single('image'), async (req: Request<IdParams>, res: R
     }
 
     const updated = await updateProduct(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Product not found' });
+    if (!updated) res.status(404).json({ error: 'product.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to update product', error: error.message });
+    res.status(500).json({ error: 'product.updateFailed' });
   }
 });
 
@@ -163,10 +163,10 @@ router.put('/:id', upload.single('image'), async (req: Request<IdParams>, res: R
 router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteProduct(req.params.id);
-    if (!deleted) res.status(404).json({ message: 'Product not found' });
+    if (!deleted) res.status(404).json({ error: 'product.notFound' });
     res.json({ message: 'Product deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete product', error: error.message });
+    res.status(500).json({ error: 'product.deleteFailed' });
   }
 });
 

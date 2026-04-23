@@ -7,7 +7,7 @@ router.post('/sendEmail', async (req: Request, res: Response) => {
   const { to, subject, text } = req.body;
 
   if (!to || !subject || !text) {
-    res.status(400).json({ success: false, message: 'Missing required fields' });
+    res.status(400).json({ error: 'mail.missingFields' });
     return;
   }
 
@@ -16,7 +16,7 @@ router.post('/sendEmail', async (req: Request, res: Response) => {
     res.json({ success: true, message: 'Email sent successfully' });
   } catch (error) {
     console.error('Error sending email:', error);
-    res.status(500).json({ success: false, message: 'Failed to send email' });
+    res.status(500).json({ error: 'mail.sendFailed' });
   }
 });
 

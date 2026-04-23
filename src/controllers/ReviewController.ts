@@ -18,7 +18,7 @@ router.post('/', async (req: Request, res: Response) => {
     const review = await createReview(req.body);
     res.status(201).json(review);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to create review', error: error.message });
+    res.status(400).json({ error: 'review.createFailed' });
   }
 });
 
@@ -28,7 +28,7 @@ router.get('/', async (_req, res) => {
     const reviews = await getAllReviews();
     res.json(reviews);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch reviews', error: error.message });
+    res.status(500).json({ error: 'review.fetchAllFailed' });
   }
 });
 
@@ -36,10 +36,10 @@ router.get('/', async (_req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const review = await getReviewById(req.params.id);
-    if (!review) res.status(404).json({ message: 'Review not found' });
+    if (!review) res.status(404).json({ error: 'review.notFound' });
     res.json(review);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch review', error: error.message });
+    res.status(500).json({ error: 'review.fetchFailed' });
   }
 });
 
@@ -49,7 +49,7 @@ router.get('/user/:userId', async (req, res) => {
     const reviews = await getReviewsByUser(req.params.userId);
     res.json(reviews);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch user reviews', error: error.message });
+    res.status(500).json({ error: 'review.fetchByUserFailed' });
   }
 });
 
@@ -59,7 +59,7 @@ router.get('/product/:productId', async (req, res) => {
     const reviews = await getReviewsByProduct(req.params.productId);
     res.json(reviews);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch product reviews', error: error.message });
+    res.status(500).json({ error: 'review.fetchByProductFailed' });
   }
 });
 
@@ -69,7 +69,7 @@ router.get('/shop/:shopId', async (req, res) => {
     const reviews = await getReviewsByShop(req.params.shopId);
     res.json(reviews);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch shop reviews', error: error.message });
+    res.status(500).json({ error: 'review.fetchByShopFailed' });
   }
 });
 
@@ -77,10 +77,10 @@ router.get('/shop/:shopId', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const updated = await updateReview(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Review not found' });
+    if (!updated) res.status(404).json({ error: 'review.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(400).json({ message: 'Failed to update review', error: error.message });
+    res.status(400).json({ error: 'review.updateFailed' });
   }
 });
 
@@ -88,10 +88,10 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const success = await deleteReview(req.params.id);
-    if (!success) res.status(404).json({ message: 'Review not found' });
+    if (!success) res.status(404).json({ error: 'review.notFound' });
     res.json({ message: 'Review deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete review', error: error.message });
+    res.status(500).json({ error: 'review.deleteFailed' });
   }
 });
 

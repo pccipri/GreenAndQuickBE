@@ -18,7 +18,7 @@ router.post('/', async (req: Request, res: Response) => {
     const id = await createCategory(category);
     res.status(201).json({ id });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create category', error: error.message });
+    res.status(500).json({ error: 'category.createFailed' });
   }
 });
 
@@ -28,7 +28,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const categories = await getAllCategories();
     res.json(categories);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch categories', error: error.message });
+    res.status(500).json({ error: 'category.fetchAllFailed' });
   }
 });
 
@@ -36,10 +36,10 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const category = await getCategoryById(req.params.id);
-    if (!category) res.status(404).json({ message: 'Category not found' });
+    if (!category) res.status(404).json({ error: 'category.notFound' });
     res.json(category);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch category', error: error.message });
+    res.status(500).json({ error: 'category.fetchFailed' });
   }
 });
 
@@ -47,10 +47,10 @@ router.get('/:id', async (req: Request<IdParams>, res: Response) => {
 router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateCategory(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Category not found' });
+    if (!updated) res.status(404).json({ error: 'category.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to update category', error: error.message });
+    res.status(500).json({ error: 'category.updateFailed' });
   }
 });
 
@@ -58,10 +58,10 @@ router.put('/:id', async (req: Request<IdParams>, res: Response) => {
 router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteCategory(req.params.id);
-    if (!deleted) res.status(404).json({ message: 'Category not found' });
+    if (!deleted) res.status(404).json({ error: 'category.notFound' });
     res.json({ message: 'Category deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete category', error: error.message });
+    res.status(500).json({ error: 'category.deleteFailed' });
   }
 });
 

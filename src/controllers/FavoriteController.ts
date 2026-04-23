@@ -18,7 +18,7 @@ router.post('/', async (req: Request, res: Response) => {
     const response = await createFavorite(req.body);
     res.status(201).json(response);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to create Favourite', error: error.message });
+    res.status(500).json({ error: 'favorite.createFailed' });
   }
 });
 
@@ -28,7 +28,7 @@ router.get('/', async (_req: Request, res: Response) => {
     const favourites = await getAllFavorites();
     res.json(favourites);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch Favourites', error: error.message });
+    res.status(500).json({ error: 'favorite.fetchAllFailed' });
   }
 });
 
@@ -36,10 +36,10 @@ router.get('/', async (_req: Request, res: Response) => {
 router.get('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const favourite = await getFavoriteById(req.params.id);
-    if (!favourite) res.status(404).json({ message: 'Favourite not found' });
+    if (!favourite) res.status(404).json({ error: 'favorite.notFound' });
     res.json(favourite);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch Favourite', error: error.message });
+    res.status(500).json({ error: 'favorite.fetchFailed' });
   }
 });
 
@@ -50,7 +50,7 @@ router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
     const favourites = await getFavoritesByUser(userId);
     res.json(favourites);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to fetch Favourites for user', error: error.message });
+    res.status(500).json({ error: 'favorite.fetchByUserFailed' });
   }
 });
 
@@ -58,10 +58,10 @@ router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
 router.put('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const updated = await updateFavorite(req.params.id, req.body);
-    if (!updated) res.status(404).json({ message: 'Favourite not found' });
+    if (!updated) res.status(404).json({ error: 'favorite.notFound' });
     res.json(updated);
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to update Favourite', error: error.message });
+    res.status(500).json({ error: 'favorite.updateFailed' });
   }
 });
 
@@ -69,10 +69,10 @@ router.put('/:id', async (req: Request<IdParams>, res: Response) => {
 router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
   try {
     const deleted = await deleteFavorite(req.params.id);
-    if (!deleted) res.status(404).json({ message: 'Favourite not found' });
+    if (!deleted) res.status(404).json({ error: 'favorite.notFound' });
     res.json({ message: 'Favourite deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to delete Favourite', error: error.message });
+    res.status(500).json({ error: 'favorite.deleteFailed' });
   }
 });
 
@@ -82,7 +82,7 @@ router.patch('/toggleProduct', async (req: Request, res: Response) => {
     const { userId, productId } = req.body;
 
     if (!userId || !productId) {
-      res.status(400).json({ message: 'Missing userId or productId' });
+      res.status(400).json({ error: 'favorite.missingIds' });
     }
 
     const result = await toggleProductInFavorite(userId, productId);
@@ -90,7 +90,7 @@ router.patch('/toggleProduct', async (req: Request, res: Response) => {
       message: result.added ? 'Product added to favorites' : 'Product removed from favorites',
     });
   } catch (error: any) {
-    res.status(500).json({ message: 'Failed to toggle product', error: error.message });
+    res.status(500).json({ error: 'favorite.toggleFailed' });
   }
 });
 

@@ -132,7 +132,7 @@ router.patch(
   ]),
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     if (!Types.ObjectId.isValid(req.params.id)) {
-      throw new Error('Invalid recipe id');
+      throw new Error('recipe.invalidId');
     }
 
     const existingRecipe = await Recipe.findOne({
@@ -141,7 +141,7 @@ router.patch(
     });
 
     if (!existingRecipe) {
-      res.status(404).json({ message: 'Recipe not found' });
+      res.status(404).json({ error: 'recipe.notFound' });
       return;
     }
 
@@ -244,7 +244,7 @@ router.delete(
   requireAuth,
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     if (!Types.ObjectId.isValid(req.params.id)) {
-      throw new Error('Invalid recipe id');
+      throw new Error('recipe.invalidId');
     }
 
     const existingRecipe = await Recipe.findOne({
@@ -253,7 +253,7 @@ router.delete(
     });
 
     if (!existingRecipe) {
-      res.status(404).json({ message: 'Recipe not found' });
+      res.status(404).json({ error: 'recipe.notFound' });
       return;
     }
 
