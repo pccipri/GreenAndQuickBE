@@ -19,10 +19,10 @@ passport.use(
           $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
         });
 
-        if (!user) return done(null, false, { message: 'Incorrect username/email' });
+        if (!user) return done(null, false, { message: 'auth.userNotFound' });
 
         const valid = await isPasswordValid(password, user.password);
-        if (!valid) return done(null, false, { message: 'Invalid password' });
+        if (!valid) return done(null, false, { message: 'auth.invalidPassword' });
 
         return done(null, user);
       } catch (err) {
@@ -42,7 +42,7 @@ passport.use(
     async (_accessToken, _refreshToken, profile: Profile, done) => {
       try {
         const email = profile.emails?.[0].value;
-        if (!email) return done(new Error('No email from Google'));
+        if (!email) return done(new Error('auth.googleNoEmail'), false);
 
         // 1. Check if a user with this googleId already exists
         let user = await User.findOne({ googleId: profile.id });

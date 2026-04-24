@@ -94,7 +94,7 @@ router.get('/getLoggedUser', requireAuth, async (req: Request, res: Response) =>
     if (!user) {
       return res.status(404).json({ error: 'user.notFound' });
     }
-    res.json({ message: 'Logged user data', user });
+    res.json({ message: 'Logged user data', user: toUserDto(user) });
   } catch (error: any) {
     res.status(500).json({ error: 'auth.fetchUserFailed' });
   }
