@@ -3,19 +3,59 @@ import passport from 'passport';
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcrypt';
 import { IVerifyOptions } from 'passport-local';
 import { requireAuth } from '../middlewares/isAuthenticated';
 import { createRefreshToken, generateAccessToken, rotateRefreshToken } from '../utils/tokens';
 import { RefreshToken } from '../schemas/RefreshTokenSchema';
-import { IUser } from '../models/IUser';
+import { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
 import { TokenParams } from '@/models/generic/Routes';
 import { configEnvs } from '@/config/env';
-import { requestPasswordReset, resetPassword } from '../services/UserService';
+import {
+  createUser,
+  requestPasswordReset,
+  resetPassword,
+  updateUser,
+} from '../services/UserService';
 import { toUserDto } from '../presenters/UserPresenter';
+import { upload } from '@/middlewares/upload';
+import { uploadPublicImage } from '@/services/PublicImageStorageService';
 
 const router = express.Router();
+
+router.post('/register', upload.single('avatar'), async (req: Request, res: Response) => {
+  try {
+    const { preferredLanguage, ...userData } = req.body as any;
+    const user: ICreateUserDTO = { ...userData };
+
+    const userId = await createUser(user, preferredLanguage);
+
+    if (req.file) {
+      const uploadedAvatar = await uploadPublicImage({
+        file: req.file.buffer,
+        mimeType: req.file.mimetype,
+        originalFilename: req.file.originalname,
+        folder: `users/${userId}/avatar`,
+      });
+
+      user.avatarPath = uploadedAvatar.path;
+      // Note: If you need the avatar path persisted, ensure createUser handles it or update the user here.
+    }
+
+    res.status(201).json({
+      id: userId,
+      message: 'auth.registrationSuccess',
+      preferredLanguage: preferredLanguage || 'en',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      message: 'auth.registrationFailed',
+      error: error.message,
+    });
+  }
+});
 
 router.post('/login', (req, res, next) => {
   passport.authenticate(
@@ -25,8 +65,8 @@ router.post('/login', (req, res, next) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ error: info?.message || 'auth.loginFailed' });
 
-      // 🔹 Check if email is verified
-      if (!user.isVerified) {
+      // 🔹 Check if user is active (email verified)
+      if (!user.isActive) {
         return res.status(403).json({ error: 'auth.emailNotVerified' });
       }
 
@@ -88,7 +128,7 @@ router.post('/logout', async (req: Request, res: Response) => {
   res.json({ message: 'Logged out' });
 });
 
-router.get('/getLoggedUser', requireAuth, async (req: Request, res: Response) => {
+router.get('/users/me', requireAuth, async (req: Request, res: Response) => {
   try {
     const user = await User.findById((req.user as any)._id, '-password').populate('userSettings');
     if (!user) {
@@ -99,6 +139,46 @@ router.get('/getLoggedUser', requireAuth, async (req: Request, res: Response) =>
     res.status(500).json({ error: 'auth.fetchUserFailed' });
   }
 });
+
+router.patch(
+  '/users/me',
+  requireAuth,
+  upload.single('avatar'),
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req.user as any)._id;
+      const updateData: any = { ...req.body };
+
+      // Prevent role escalation
+      delete updateData.role;
+      delete updateData.email;
+      delete updateData.isActive;
+
+      if (req.file) {
+        const uploadedAvatar = await uploadPublicImage({
+          file: req.file.buffer,
+          mimeType: req.file.mimetype,
+          originalFilename: req.file.originalname,
+          folder: `users/${userId}/avatar`,
+        });
+        updateData.avatarPath = uploadedAvatar.path;
+      }
+
+      const updatedUser = await updateUser(userId, updateData);
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'user.notFound' });
+      }
+
+      res.json({
+        message: 'profile.updateSuccess',
+        user: toUserDto(updatedUser),
+      });
+    } catch (error: any) {
+      console.error('Update profile error:', error);
+      res.status(500).json({ error: 'user.updateFailed' });
+    }
+  },
+);
 
 router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) => {
   const { token } = req.params;
@@ -123,7 +203,7 @@ router.get('/confirm/:token', async (req: Request<TokenParams>, res: Response) =
   }
 
   // If valid: verify user and cleanup
-  await User.findByIdAndUpdate(record.userId, { isVerified: true });
+  await User.findByIdAndUpdate(record.userId, { isActive: true });
   await EmailConfirmationToken.deleteMany({ userId: record.userId }); // Clean up all tokens
 
   res.json({ message: 'Email verified successfully' });
@@ -143,12 +223,22 @@ router.get(
     session: false,
     failureRedirect: `${configEnvs.FAILURE_URL_GOOGLE_CALLBACK}/oauth`,
   }),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     const user = req.user as IUser;
-    const token = generateAccessToken(user._id.toString());
+    const accessToken = generateAccessToken(user._id.toString());
 
-    // Send the JWT to your frontend via query param or a short-lived cookie
-    res.redirect(`${configEnvs.SUCCESS_URL_GOOGLE_CALLBACK}/${token}`);
+    // Create refresh token to match local login flow
+    const refreshToken = await createRefreshToken(user._id.toString());
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: configEnvs.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 4 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect with access token
+    res.redirect(`${configEnvs.SUCCESS_URL_GOOGLE_CALLBACK}/${accessToken}`);
   },
 );
 router.post('/forgot-password', async (req: Request, res: Response) => {

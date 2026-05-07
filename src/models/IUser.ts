@@ -7,7 +7,7 @@ export interface IUser {
   username: string;
   email: string;
   password: string;
-  role: 'user' | 'admin' | 'shopOwner';
+  role: 'customer' | 'admin' | 'shopOwner';
   firstName: string | null;
   lastName: string | null;
   avatarPath: string | null;
@@ -17,7 +17,7 @@ export interface IUser {
   updatedAt: Date;
   phoneNumber: string | null;
   googleId: string | null;
-  isVerified: boolean;
+  isActive: boolean;
 }
 
 export interface UserSettingsDto {
@@ -34,4 +34,4 @@ export interface UserDto extends Omit<IUser, '_id' | 'avatarPath' | 'password' |
   userSettings?: UserSettingsDto;
 }
 
-export type ICreateUserDTO = Omit<IUser, '_id' | 'createdAt' | 'updatedAt' | 'isVerified'>;
+export type ICreateUserDTO = Omit<IUser, '_id' | 'createdAt' | 'updatedAt' | 'isActive'>;

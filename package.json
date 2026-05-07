@@ -6,7 +6,7 @@
   "scripts": {
     "start": "tsx src/index.ts",
     "dev": "tsx watch src/index.ts",
-    "seed": "tsx seeds/seedConstants.ts",
+    "seedAdmin": "tsx seeds/seedAdmin.ts",
     "stripe_webhook": "stripe listen --forward-to localhost:3000/webhook",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

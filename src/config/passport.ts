@@ -58,9 +58,9 @@ passport.use(
             // 3. Brand new user — create them
             user = await User.create({
               googleId: profile.id,
-              role: 'user',
+              role: 'customer',
               email,
-              isVerified: true,
+              isActive: true,
               username: profile.displayName,
             });
           }

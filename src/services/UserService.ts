@@ -14,7 +14,7 @@ export const createUser = async (userToSave: ICreateUserDTO, preferredLanguage: 
   const newUser = new User({
     ...userToSave,
     password: await hashPassword(userToSave.password),
-    role: 'user',
+    role: 'customer',
   });
 
   const response = await newUser.save();

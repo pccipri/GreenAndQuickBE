@@ -1,7 +1,5 @@
 import express, { Request, Response } from 'express';
-import { ICreateUserDTO } from '../models/IUser';
 import {
-  createUser,
   deleteUser,
   getAllUsers,
   getUserById,
@@ -20,38 +18,6 @@ import { toUserDto } from '@/presenters/UserPresenter';
 import { upload } from '@/middlewares/upload';
 
 const router = express.Router();
-
-// Create a user
-router.post('/', upload.single('avatar'), async (req: Request, res: Response) => {
-  try {
-    const { preferredLanguage, ...userData } = req.body as any;
-    const user: ICreateUserDTO = { ...userData };
-
-    const userId = await createUser(user, preferredLanguage);
-
-    if (req.file) {
-      const uploadedAvatar = await uploadPublicImage({
-        file: req.file.buffer,
-        mimeType: req.file.mimetype,
-        originalFilename: req.file.originalname,
-        folder: `users/${userId}/avatar`,
-      });
-
-      user.avatarPath = uploadedAvatar.path;
-    }
-
-    res.status(201).json({
-      id: userId,
-      message: 'User registered. Check email for verification link.',
-      preferredLanguage: preferredLanguage || 'en',
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: 'Failed to create user',
-      error: error.message,
-    });
-  }
-});
 
 router.get('/:id/settings', async (req: Request<IdParams>, res: Response) => {
   try {
