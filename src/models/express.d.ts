@@ -1,10 +1,11 @@
-import 'express';
+import { IUser } from './IUser';
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: { _id: string };
-    }
+    // augment the User interface that Passport uses
+    // This makes req.user automatically typed as IUser
+    interface User extends IUser {}
   }
 }
+
 export {};

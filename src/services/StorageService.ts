@@ -1,5 +1,10 @@
 import { supabase } from '@/libs/supabase/supabase';
-import { ListFilesInput, ReplaceFileInput, UploadFileInput } from '@/models/generic/Storage';
+import {
+  ListFilesInput,
+  ReplaceFileInput,
+  UploadFileInput,
+  FileObject,
+} from '@/models/generic/Storage';
 
 export async function uploadFile({
   bucket,
@@ -55,6 +60,38 @@ export async function deleteFiles(bucket: string, paths: string[]): Promise<void
   if (error) {
     throw new Error(`Failed to delete files from "${bucket}": ${error.message}`);
   }
+}
+
+export async function deleteFolder(bucket: string, folderPath: string): Promise<void> {
+  const normalizedFolderPath = folderPath.endsWith('/') ? folderPath : `${folderPath}/`;
+
+  let allFilePathsToDelete: string[] = [];
+  let offset = 0;
+  const limit = 100; // Supabase list limit per request
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase.storage.from(bucket).list(normalizedFolderPath, {
+      limit: limit,
+      offset: offset,
+    });
+
+    if (error) {
+      throw new Error(`Failed to list files in folder "${bucket}/${folderPath}": ${error.message}`);
+    }
+
+    if (data && data.length > 0) {
+      allFilePathsToDelete = allFilePathsToDelete.concat(
+        data.map((file: FileObject) => `${normalizedFolderPath}${file.name}`),
+      );
+      offset += data.length;
+      hasMore = data.length === limit; // If data.length is less than limit, it means it's the last page
+    } else {
+      hasMore = false; // No more files or folder is empty
+    }
+  }
+
+  await deleteFiles(bucket, allFilePathsToDelete);
 }
 
 export async function downloadFile(bucket: string, path: string): Promise<Blob> {

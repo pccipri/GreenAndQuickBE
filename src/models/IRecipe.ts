@@ -60,9 +60,24 @@ export interface IRecipe {
   updatedAt: Date;
 }
 
-export interface IRecipeDTO extends Omit<IRecipe, '_id' | 'imagePath | instructions.imagePath'> {
+export interface IRecipeInstructionDTO extends Omit<IRecipeInstruction, 'imagePath'> {
+  imageUrl: string | null;
+}
+
+export interface IRecipeDTO extends Omit<
+  IRecipe,
+  '_id' | 'imagePath' | 'instructions' | 'authorId'
+> {
   id: string;
   imageUrl: string | null;
+  instructions: IRecipeInstructionDTO[];
+  author?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    avatarUrl: string | null;
+  };
+  authorId: string;
 }
 
 export type ICreateRecipeDTO = Omit<IRecipe, '_id' | 'createdAt' | 'updatedAt'>;

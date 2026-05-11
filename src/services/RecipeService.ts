@@ -17,31 +17,6 @@ type ListQuery = {
   limit?: string;
 };
 
-const UPDATE_WHITELIST = new Set([
-  'title',
-  'shortDescription',
-  'ingredients',
-  'instructions',
-  'mealType',
-  'difficulty',
-  'tags',
-  'servings',
-  'nutritionPerPortion',
-  'duration',
-  'durationType',
-  'imageUrl',
-  'nutritionValues',
-  'isPublished',
-]);
-
-function pickAllowedUpdates(payload: Record<string, any>) {
-  const out: Record<string, any> = {};
-  for (const [k, v] of Object.entries(payload)) {
-    if (UPDATE_WHITELIST.has(k)) out[k] = v;
-  }
-  return out;
-}
-
 export const recipeService = {
   async create(authorId: string, payload: any) {
     const doc = await Recipe.create({
@@ -55,7 +30,9 @@ export const recipeService = {
   async getById(requesterId: string | null, id: string) {
     if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'Invalid recipe id');
 
-    const recipe = await Recipe.findById(id).lean();
+    const recipe = await Recipe.findById(id)
+      .populate('authorId', 'firstName lastName avatarPath')
+      .lean();
     if (!recipe) throw new HttpError(404, 'Recipe not found');
 
     const isOwner = requesterId && String(recipe.authorId) === String(requesterId);
@@ -65,7 +42,9 @@ export const recipeService = {
   },
 
   async getBySlug(requesterId: string | null, slug: string) {
-    const recipe = await Recipe.findOne({ slug }).lean();
+    const recipe = await Recipe.findOne({ slug })
+      .populate('authorId', 'firstName lastName avatarPath')
+      .lean();
     if (!recipe) throw new HttpError(404, 'Recipe not found');
 
     const isOwner = requesterId && String(recipe.authorId) === String(requesterId);
@@ -74,26 +53,33 @@ export const recipeService = {
     return toRecipeDto(recipe);
   },
 
-  async update(authorId: string, id: string, payload: any) {
+  async update(id: string, payload: any, requesterId: string, isAdmin: boolean) {
     if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'Invalid recipe id');
 
-    const updates = pickAllowedUpdates(payload);
+    const filter: any = { _id: id };
+
+    if (!isAdmin) {
+      filter.authorId = new Types.ObjectId(requesterId);
+    }
 
     const recipe = await Recipe.findOneAndUpdate(
-      { _id: id, authorId: new Types.ObjectId(authorId) },
-      { $set: updates },
+      filter,
+      { $set: payload },
       { new: true, runValidators: true },
     ).lean();
 
-    if (!recipe) throw new HttpError(404, 'Recipe not found (or not owner)');
+    if (!recipe) throw new HttpError(404, 'recipe.notFound');
 
     return toRecipeDto(recipe);
   },
 
-  async remove(authorId: string, id: string) {
+  async remove(id: string, requesterId: string, isAdmin: boolean) {
     if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'Invalid recipe id');
-    const res = await Recipe.deleteOne({ _id: id, authorId: new Types.ObjectId(authorId) });
-    if (res.deletedCount === 0) throw new HttpError(404, 'Recipe not found (or not owner)');
+    const filter: any = { _id: id };
+    if (!isAdmin) filter.authorId = new Types.ObjectId(requesterId);
+
+    const res = await Recipe.deleteOne(filter);
+    if (res.deletedCount === 0) throw new HttpError(404, 'recipe.notFound');
     return { ok: true };
   },
 
@@ -147,7 +133,10 @@ export const recipeService = {
       findQuery.sort({ score: { $meta: 'textScore' } } as any);
     }
 
-    const [items, total] = await Promise.all([findQuery.lean(), Recipe.countDocuments(mongoQuery)]);
+    const [items, total] = await Promise.all([
+      findQuery.populate('authorId', 'firstName lastName avatarPath').lean(),
+      Recipe.countDocuments(mongoQuery),
+    ]);
 
     return {
       items: items.map(toRecipeDto),

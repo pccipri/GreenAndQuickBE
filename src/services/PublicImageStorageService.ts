@@ -1,6 +1,12 @@
 import { getExtension, normalizeFolder } from '@/utils/storage';
 import { randomUUID } from 'node:crypto';
-import { deleteFile, getPublicFileUrl, replaceFile, uploadFile } from './StorageService';
+import {
+  deleteFile,
+  deleteFolder,
+  getPublicFileUrl,
+  replaceFile,
+  uploadFile,
+} from './StorageService';
 import { PUBLIC_IMAGE_BUCKET } from '@/utils/constants';
 import {
   ReplaceBucketFileInput,
@@ -47,6 +53,10 @@ export async function replacePublicImage(
 
 export async function deletePublicImage(path: string): Promise<void> {
   await deleteFile(PUBLIC_IMAGE_BUCKET, path);
+}
+
+export async function deletePublicImageFolder(folderPath: string): Promise<void> {
+  await deleteFolder(PUBLIC_IMAGE_BUCKET, folderPath);
 }
 
 export function getPublicImageUrl(path: string): string {

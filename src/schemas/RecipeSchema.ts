@@ -47,7 +47,7 @@ const nutritionPerPortionSchema = new Schema(
 
 const recipeInstructionSchema = new Schema(
   {
-    stepNumber: { type: Number, required: true, min: 1, unique: true },
+    stepNumber: { type: Number, required: true, min: 1 },
     description: { type: String, required: true, trim: true, maxlength: 1000 },
     imagePath: { type: String, default: null },
   },
@@ -60,7 +60,18 @@ const recipeSchema = new Schema(
     title: { type: String, required: true, trim: true, maxlength: 200 },
     shortDescription: { type: String, required: true, trim: true, maxlength: 1000 },
     ingredients: { type: [ingredientSchema], required: true, default: [] },
-    instructions: { type: [recipeInstructionSchema], required: true, default: [] },
+    instructions: {
+      type: [recipeInstructionSchema],
+      required: true,
+      default: [],
+      validate: {
+        validator: (val: any[]) => {
+          const stepNumbers = val.map((v) => v.stepNumber);
+          return new Set(stepNumbers).size === stepNumbers.length;
+        },
+        message: 'recipe.duplicateStepNumbers',
+      },
+    },
     mealType: { type: String, required: true, enum: MEAL_TYPES, index: true },
     difficulty: { type: String, enum: DIFFICULTIES },
     tags: { type: [String], default: [], index: true },
@@ -70,7 +81,7 @@ const recipeSchema = new Schema(
     durationType: { type: String, required: true, enum: DURATION_TYPES },
     imagePath: { type: String, default: null },
     nutritionValues: { type: [nutritionValueSchema], required: false, default: undefined },
-    isPublished: { type: Boolean, default: false, index: true },
+    isPublished: { type: Boolean, default: true, index: true },
     rating: { type: Number, default: 0, min: 0, max: 5, index: true },
     reviewCount: { type: Number, default: 0, min: 0 },
     slug: { type: String, trim: true, lowercase: true, index: true },
@@ -81,16 +92,15 @@ const recipeSchema = new Schema(
 recipeSchema.index({ isPublished: 1, mealType: 1 });
 
 recipeSchema.index(
-  { title: 'text', shortDescription: 'text', tags: 'text' },
-  { weights: { title: 10, tags: 5, shortDescription: 1 } },
+  { title: 'text', shortDescription: 'text', tags: 'text', 'ingredients.label': 'text' },
+  { weights: { title: 10, tags: 5, shortDescription: 1, 'ingredients.label': 2 } },
 );
 
-recipeSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany'], function (next) {
+recipeSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany'], function () {
   const update = this.getUpdate();
   if (!update) return;
   normalizeRating(update as any);
   normalizeTitleAndSlug(update as any);
-  next();
 });
 
 recipeSchema.pre('validate', function () {

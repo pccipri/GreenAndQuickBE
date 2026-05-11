@@ -1,5 +1,6 @@
 import { recipeService } from '@/services/RecipeService';
-import { requireAuth } from '@/middlewares/isAuthenticated';
+import { HttpError } from '@/middlewares/errorHandler';
+import { requireActiveUser, requireAuth } from '@/middlewares/isAuthenticated';
 import { IdParams, SlugParams } from '@/models/generic/Routes';
 import { Router, Request, Response } from 'express';
 import { upload } from '@/middlewares/upload';
@@ -7,11 +8,13 @@ import {
   deletePublicImage,
   replacePublicImage,
   uploadPublicImage,
+  deletePublicImageFolder,
 } from '@/services/PublicImageStorageService';
 import { Recipe } from '@/schemas/RecipeSchema';
 import { Types } from 'mongoose';
-import { normalizeRecipePayload } from '@/presenters/RecipePresenter';
 import { asyncHandler } from '@/middlewares/asyncHandler';
+import { validate } from '@/middlewares/validate';
+import { createRecipeSchema, updateRecipeSchema } from '@/validations/recipeValidation';
 
 const router = Router();
 
@@ -66,57 +69,76 @@ router.get(
 router.post(
   '/',
   requireAuth,
+  requireActiveUser,
   upload.fields([
     { name: 'mainImage', maxCount: 1 },
     { name: 'instructionImages', maxCount: 50 },
   ]),
+  validate(createRecipeSchema),
   asyncHandler(async (req: Request, res: Response) => {
-    const payload = normalizeRecipePayload(req);
+    const payload = req.body;
+    const recipeId = new Types.ObjectId(); // Generate ObjectId upfront
     const files = getUploadFiles(req);
+
+    let uploadedMainImagePath: string | null = null;
+    const uploadedInstructionImagePaths: string[] = [];
+
+    // cleanup function to run if recipe creation fails
+    const cleanupImages = async () => {
+      await deletePublicImageFolder(`recipes/${recipeId}/main`);
+      await deletePublicImageFolder(`recipes/${recipeId}/instructions`);
+    };
 
     const mainImageFile = files.mainImage?.[0] ?? null;
     const instructionImageFiles = files.instructionImages ?? [];
 
-    if (mainImageFile) {
-      const uploadedMainImage = await uploadPublicImage({
-        file: mainImageFile.buffer,
-        mimeType: mainImageFile.mimetype,
-        originalFilename: mainImageFile.originalname,
-        folder: `recipes/${req.user!._id}/main`,
-      });
+    try {
+      if (mainImageFile) {
+        const uploadedMainImage = await uploadPublicImage({
+          file: mainImageFile.buffer,
+          mimeType: mainImageFile.mimetype,
+          originalFilename: mainImageFile.originalname,
+          folder: `recipes/${recipeId}/main`,
+        });
+        uploadedMainImagePath = uploadedMainImage.path; // Store path for cleanup
+        payload.imagePath = uploadedMainImagePath;
+      }
 
-      payload.imagePath = uploadedMainImage.path;
-    }
+      if (Array.isArray(payload.instructions)) {
+        payload.instructions = await Promise.all(
+          payload.instructions.map(async (instruction: any, index: number) => {
+            const imageFile = instructionImageFiles[index];
 
-    if (Array.isArray(payload.instructions)) {
-      payload.instructions = await Promise.all(
-        payload.instructions.map(async (instruction: any, index: number) => {
-          const imageFile = instructionImageFiles[index];
+            if (!imageFile) {
+              return {
+                ...instruction,
+                imagePath: instruction.imagePath ?? null,
+              };
+            }
 
-          if (!imageFile) {
+            const uploadedInstructionImage = await uploadPublicImage({
+              file: imageFile.buffer,
+              mimeType: imageFile.mimetype,
+              originalFilename: imageFile.originalname,
+              folder: `recipes/${recipeId}/instructions`,
+            });
+            uploadedInstructionImagePaths.push(uploadedInstructionImage.path); // Store path for cleanup
+
             return {
               ...instruction,
-              imagePath: instruction.imagePath ?? null,
+              imagePath: uploadedInstructionImage.path,
             };
-          }
+          }),
+        );
+      }
 
-          const uploadedInstructionImage = await uploadPublicImage({
-            file: imageFile.buffer,
-            mimeType: imageFile.mimetype,
-            originalFilename: imageFile.originalname,
-            folder: `recipes/${req.user!._id}/instructions`,
-          });
-
-          return {
-            ...instruction,
-            imagePath: uploadedInstructionImage.path,
-          };
-        }),
-      );
+      const doc = await recipeService.create(req.user!._id, { ...payload, _id: recipeId });
+      res.status(201).json(doc);
+    } catch (error) {
+      // If recipe creation fails, clean up uploaded images
+      await cleanupImages();
+      throw error; // Re-throw the error to be caught by asyncHandler and errorHandler
     }
-
-    const doc = await recipeService.create(req.user!._id, payload);
-    res.status(201).json(doc);
   }),
 );
 
@@ -130,22 +152,27 @@ router.patch(
     { name: 'mainImage', maxCount: 1 },
     { name: 'instructionImages', maxCount: 50 },
   ]),
+  validate(updateRecipeSchema),
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     if (!Types.ObjectId.isValid(req.params.id)) {
-      throw new Error('recipe.invalidId');
+      throw new HttpError(400, 'recipe.invalidId');
     }
 
-    const existingRecipe = await Recipe.findOne({
-      _id: req.params.id,
-      authorId: new Types.ObjectId(req.user!._id),
-    });
+    const isAdmin = req.user?.role === 'admin';
+    const filter: any = { _id: req.params.id };
+
+    if (!isAdmin) {
+      filter.authorId = new Types.ObjectId(req.user!._id);
+    }
+
+    const existingRecipe = await Recipe.findOne(filter);
 
     if (!existingRecipe) {
       res.status(404).json({ error: 'recipe.notFound' });
       return;
     }
 
-    const payload = normalizeRecipePayload(req);
+    const payload = req.body;
     const files = getUploadFiles(req);
 
     const mainImageFile = files.mainImage?.[0] ?? null;
@@ -231,7 +258,7 @@ router.patch(
     delete payload.removeMainImage;
     delete payload.removeInstructionImages;
 
-    const doc = await recipeService.update(req.user!._id, req.params.id, payload);
+    const doc = await recipeService.update(req.params.id, payload, req.user!._id, isAdmin);
     res.json(doc);
   }),
 );
@@ -244,32 +271,28 @@ router.delete(
   requireAuth,
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     if (!Types.ObjectId.isValid(req.params.id)) {
-      throw new Error('recipe.invalidId');
+      throw new HttpError(400, 'recipe.invalidId');
     }
 
-    const existingRecipe = await Recipe.findOne({
-      _id: req.params.id,
-      authorId: new Types.ObjectId(req.user!._id),
-    });
+    const isAdmin = req.user?.role === 'admin';
+    const filter: any = { _id: req.params.id };
+
+    if (!isAdmin) {
+      filter.authorId = new Types.ObjectId(req.user!._id);
+    }
+
+    const existingRecipe = await Recipe.findOne(filter);
 
     if (!existingRecipe) {
       res.status(404).json({ error: 'recipe.notFound' });
       return;
     }
 
-    if (existingRecipe.imagePath) {
-      await deletePublicImage(existingRecipe.imagePath);
-    }
+    // Efficiently cleanup all images associated with this recipe
+    await deletePublicImageFolder(`recipes/${req.params.id}/main`);
+    await deletePublicImageFolder(`recipes/${req.params.id}/instructions`);
 
-    if (Array.isArray(existingRecipe.instructions)) {
-      for (const instruction of existingRecipe.instructions) {
-        if (instruction.imagePath) {
-          await deletePublicImage(instruction.imagePath);
-        }
-      }
-    }
-
-    const result = await recipeService.remove(req.user!._id, req.params.id);
+    const result = await recipeService.remove(req.params.id, req.user!._id, isAdmin);
     res.json(result);
   }),
 );
