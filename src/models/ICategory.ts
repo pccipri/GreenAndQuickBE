@@ -1,7 +1,11 @@
 export default interface ICategory {
   _id: string;
   name: string;
-  isGlobal: boolean;
+  slug: string;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CategoryDto extends Omit<ICategory, '_id'> {
+  id: string;
 }

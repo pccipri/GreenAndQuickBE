@@ -6,22 +6,8 @@ import {
   DIFFICULTIES,
   DURATION_TYPES,
 } from '@/utils/constants';
+import { jsonString } from '@/utils/helpers';
 import { z } from 'zod';
-
-/**
- * Helper to handle JSON stringified fields coming from multipart/form-data (Multer)
- */
-const jsonString = (schema: z.ZodTypeAny) =>
-  z.preprocess((val) => {
-    if (typeof val === 'string' && val.trim() !== '') {
-      try {
-        return JSON.parse(val);
-      } catch {
-        return val;
-      }
-    }
-    return val;
-  }, schema);
 
 const ingredientSchema = z.object({
   label: z.string().min(1).max(100),

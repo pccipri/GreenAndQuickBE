@@ -5,7 +5,7 @@ export interface AddressDocument extends Document {
   city: string;
   county: string;
   country: string;
-  zipcode: number;
+  zipcode: string;
   isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -17,7 +17,7 @@ export const addressSchema = new Schema<AddressDocument>(
     city: { type: String, required: true },
     county: { type: String, required: true },
     country: { type: String, required: true },
-    zipcode: { type: Number, required: true },
+    zipcode: { type: String, required: true },
     isDefault: { type: Boolean, default: false },
   },
   { timestamps: true },

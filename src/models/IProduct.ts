@@ -1,19 +1,23 @@
 export default interface IProduct {
   _id: string;
-  shop: string;
+  shopId: string;
+  categoryId: string;
   name: string;
+  slug: string;
   description: string;
-  imagePath: string | null;
+  images: string[];
   price: number;
   reducedPrice: number | null;
-  category: string;
+  isAvailable: boolean;
+  stock: number;
+  lowStockThreshold: number;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface ProductDto extends Omit<IProduct, '_id' | 'imagePath'> {
+export interface ProductDto extends Omit<IProduct, '_id' | 'images'> {
   id: string;
-  imageUrl: string | null;
+  imageUrls: string[];
 }
 
 export type ICreateProductDTO = Omit<IProduct, '_id' | 'createdAt' | 'updatedAt'>;

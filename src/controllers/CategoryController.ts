@@ -1,68 +1,64 @@
 import { Request, Response, Router } from 'express';
-import {
-  createCategory,
-  deleteCategory,
-  getAllCategories,
-  getCategoryById,
-  updateCategory,
-} from '../services/CategoryService';
-import ICategory from '../models/ICategory';
+import { categoryService } from '@/services/CategoryService';
 import { IdParams } from '@/models/generic/Routes';
+import { asyncHandler } from '@/middlewares/asyncHandler';
+import { requireAuth, requireRole } from '@/middlewares/isAuthenticated';
+import { validate } from '@/middlewares/validate';
+import { createCategorySchema, updateCategorySchema } from '@/validations/categoryValidation';
 
 const router = Router();
 
-// Create a new category
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const category: ICategory = req.body;
-    const id = await createCategory(category);
-    res.status(201).json({ id });
-  } catch (error: any) {
-    res.status(500).json({ error: 'category.createFailed' });
-  }
-});
-
-// Get all categories
-router.get('/', async (_req: Request, res: Response) => {
-  try {
-    const categories = await getAllCategories();
+// List all categories (Public)
+router.get(
+  '/',
+  asyncHandler(async (_req: Request, res: Response) => {
+    const categories = await categoryService.list();
     res.json(categories);
-  } catch (error: any) {
-    res.status(500).json({ error: 'category.fetchAllFailed' });
-  }
-});
+  }),
+);
 
-// Get a category by ID
-router.get('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const category = await getCategoryById(req.params.id);
-    if (!category) res.status(404).json({ error: 'category.notFound' });
+// Get a category by ID (Public)
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const category = await categoryService.getById(req.params.id);
     res.json(category);
-  } catch (error: any) {
-    res.status(500).json({ error: 'category.fetchFailed' });
-  }
-});
+  }),
+);
 
-// Update a category by ID
-router.put('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const updated = await updateCategory(req.params.id, req.body);
-    if (!updated) res.status(404).json({ error: 'category.notFound' });
-    res.json(updated);
-  } catch (error: any) {
-    res.status(500).json({ error: 'category.updateFailed' });
-  }
-});
+// Create a new category (Admin Only)
+router.post(
+  '/',
+  requireAuth,
+  requireRole(['admin']),
+  validate(createCategorySchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const category = await categoryService.create(req.body);
+    res.status(201).json(category);
+  }),
+);
 
-// Delete a category by ID
-router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const deleted = await deleteCategory(req.params.id);
-    if (!deleted) res.status(404).json({ error: 'category.notFound' });
-    res.json({ message: 'Category deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: 'category.deleteFailed' });
-  }
-});
+// Update a category by ID (Admin Only)
+router.patch(
+  '/:id',
+  requireAuth,
+  requireRole(['admin']),
+  validate(updateCategorySchema),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const category = await categoryService.update(req.params.id, req.body);
+    res.json(category);
+  }),
+);
+
+// Delete a category by ID (Admin Only)
+router.delete(
+  '/:id',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const result = await categoryService.remove(req.params.id);
+    res.json(result);
+  }),
+);
 
 export default router;

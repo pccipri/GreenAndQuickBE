@@ -1,43 +1,124 @@
-import { IShop } from '../models/IShop';
-import { Shop } from '../schemas/ShopSchema';
+import { Shop } from '@/schemas/ShopSchema';
+import { Product } from '@/schemas/ProductSchema';
+import { Category } from '@/schemas/CategorySchema';
+import { toShopDto } from '@/presenters/ShopPresenter';
+import { toProductDto } from '@/presenters/ProductPresenter';
+import { HttpError } from '@/middlewares/errorHandler';
+import { SortOrder, Types } from 'mongoose';
 
-// Create a shop
-export const createShop = async (shopData: IShop) => {
-  const existing = await Shop.findOne({ owner: shopData.owner });
-  if (existing) {
-    throw new Error('User already owns a shop.');
-  }
-
-  const shop = new Shop(shopData);
-  const saved = await shop.save();
-  return saved.toJSON();
+type ShopListQuery = {
+  search?: string;
+  category?: string; // category slug
+  sort?: 'newest' | 'popular';
+  page?: string;
+  limit?: string;
 };
 
-// Get all shops
-export const getAllShops = async () => {
-  const shops = await Shop.find();
-  return shops.map((shop) => shop.toJSON());
-};
+export const shopService = {
+  async create(ownerId: string, payload: any) {
+    const existing = await Shop.findOne({ ownerId: new Types.ObjectId(ownerId) });
+    if (existing) {
+      throw new HttpError(409, 'shop.alreadyExistsForOwner');
+    }
 
-// Get a shop by ID
-export const getShopById = async (id: string) => {
-  const shop = await Shop.findById(id);
-  return shop || null;
-};
+    const doc = await Shop.create({
+      ...payload,
+      ownerId: new Types.ObjectId(ownerId),
+    });
 
-// Get shop by owner
-export const getShopByOwner = async (owner: string) => {
-  return await Shop.findOne({ owner });
-};
+    return toShopDto(doc);
+  },
 
-// Update a shop
-export const updateShop = async (id: string, updatedData: Partial<IShop>) => {
-  const updated = await Shop.findByIdAndUpdate(id, updatedData, { new: true });
-  return updated || null;
-};
+  async list(query: ShopListQuery) {
+    const page = Math.max(1, Number(query.page ?? 1) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query.limit ?? 20) || 20));
+    const skip = (page - 1) * limit;
 
-// Delete a shop
-export const deleteShop = async (id: string) => {
-  const deleted = await Shop.findByIdAndDelete(id);
-  return !!deleted;
+    const filter: any = { isActive: true };
+
+    // Category filtering: Find shops that have products in this category
+    if (query.category) {
+      const categoryDoc = await Category.findOne({ slug: query.category });
+      if (categoryDoc) {
+        const shopIds = await Product.distinct('shopId', { categoryId: categoryDoc._id });
+        filter._id = { $in: shopIds };
+      } else {
+        // If category slug is invalid, return empty results
+        return { items: [], page, limit, total: 0, pages: 0 };
+      }
+    }
+
+    const mongoQuery = query.search ? { ...filter, $text: { $search: query.search } } : filter;
+    const findQuery = Shop.find(mongoQuery);
+
+    // Sorting
+    const sort: Record<string, SortOrder> =
+      query.sort === 'popular'
+        ? { createdAt: -1 } // Placeholder for popular (could be based on product count or orders)
+        : { createdAt: -1 };
+
+    findQuery.sort(sort).skip(skip).limit(limit);
+
+    if (query.search) {
+      findQuery.select({ score: { $meta: 'textScore' } } as any);
+      findQuery.sort({ score: { $meta: 'textScore' } } as any);
+    }
+
+    const [items, total] = await Promise.all([
+      findQuery.populate('ownerId', 'firstName lastName avatarPath').lean(),
+      Shop.countDocuments(mongoQuery),
+    ]);
+
+    return {
+      items: items.map(toShopDto),
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    };
+  },
+
+  async getBySlug(slug: string) {
+    const doc = await Shop.findOne({ slug, isActive: true })
+      .populate('ownerId', 'firstName lastName avatarPath')
+      .lean();
+    if (!doc) throw new HttpError(404, 'shop.notFound');
+
+    // Get a preview of the latest 4 products
+    const products = await Product.find({ shopId: doc._id, isAvailable: true })
+      .sort({ createdAt: -1 })
+      .limit(4)
+      .lean();
+
+    return {
+      ...toShopDto(doc),
+      products: products.map(toProductDto),
+    };
+  },
+
+  async getById(id: string) {
+    if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'shop.invalidId');
+    const doc = await Shop.findById(id).lean();
+    if (!doc) throw new HttpError(404, 'shop.notFound');
+    return toShopDto(doc);
+  },
+
+  async update(id: string, payload: any, ownerId: string, isAdmin: boolean) {
+    if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'shop.invalidId');
+
+    const filter: any = { _id: id };
+    if (!isAdmin) filter.ownerId = new Types.ObjectId(ownerId);
+
+    const updated = await Shop.findOneAndUpdate(filter, { $set: payload }, { new: true }).lean();
+    if (!updated) throw new HttpError(404, 'shop.notFound');
+
+    return toShopDto(updated);
+  },
+
+  async softDelete(id: string) {
+    if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'shop.invalidId');
+    const deleted = await Shop.findByIdAndUpdate(id, { isActive: false }, { new: true });
+    if (!deleted) throw new HttpError(404, 'shop.notFound');
+    return { ok: true };
+  },
 };

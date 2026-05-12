@@ -1,16 +1,6 @@
-export enum USER_ROLES {
-  'CUSTOMER',
-  'EMPLOYEE',
-  'ADMIN',
-}
+export const USER_ROLES = ['customer', 'admin', 'shopOwner'] as const;
 
-export enum ORDER_STATUSES {
-  'RECEIVED',
-  'PREPARING',
-  'READYFORDELIVERY',
-  'DELIVERED',
-  'CANCELLED',
-}
+export const ORDER_STATUSES = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const;
 
 export const DURATION_TYPES = ['MINUTES', 'HOURS'] as const;
 
@@ -30,6 +20,19 @@ export const NUTRIENT_LABELS = [
   'Sugars',
   'Protein',
   'Salt',
+] as const;
+
+export const PRODUCT_CATEGORIES = [
+  'Vegetables',
+  'Fruits',
+  'Dairy',
+  'Meat',
+  'Eggs',
+  'Honey & Bee Products',
+  'Herbs & Spices',
+  'Preserved Foods',
+  'Baked Goods',
+  'Other',
 ] as const;
 
 export const PUBLIC_IMAGE_BUCKET = 'public-images';
