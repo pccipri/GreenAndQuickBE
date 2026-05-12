@@ -37,7 +37,6 @@ const shopSchema = new Schema(
 );
 
 shopSchema.index({ name: 'text', description: 'text' }, { weights: { name: 10, description: 5 } });
-shopSchema.index({ isActive: 1 });
 
 shopSchema.pre('validate', function () {
   if (this.isNew || this.isModified('name')) {

@@ -42,8 +42,6 @@ productSchema.index(
   { name: 'text', description: 'text' },
   { weights: { name: 10, description: 5 } },
 );
-productSchema.index({ categoryId: 1 });
-productSchema.index({ isAvailable: 1 });
 
 productSchema.pre('validate', function () {
   if (this.isNew || this.isModified('name')) {
