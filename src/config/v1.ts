@@ -13,6 +13,10 @@ import RecipeController from '../controllers/RecipeController';
 import ShopGroupController from '../controllers/ShopGroupController';
 import SubscriptionController from '../controllers/SubscriptionController';
 import MailController from '../controllers/MailController';
+import CartController from '../controllers/CartController';
+import CheckoutController from '../controllers/CheckoutController';
+import WebhookController from '../controllers/WebhookController';
+import SavedCardController from '../controllers/SavedCardController';
 
 const apiController = express.Router();
 
@@ -29,7 +33,11 @@ apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
 apiController.use('/favorite', FavoriteController);
 apiController.use('/payment', StripeController);
+apiController.use('/cart', CartController);
+apiController.use('/checkout', CheckoutController);
 apiController.use('/recipes', RecipeController);
+apiController.use('/webhooks', WebhookController);
+apiController.use('/payment-methods', SavedCardController);
 // Used for testing emails
 // apiController.use('/email', MailController);
 

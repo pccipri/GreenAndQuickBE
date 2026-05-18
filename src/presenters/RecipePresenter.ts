@@ -2,7 +2,6 @@ import { IRecipeDTO } from '@/models/IRecipe';
 import { toDtoWithImageUrl } from './GenericPresenter';
 import { getPublicFileUrl } from '@/services/StorageService';
 import { PUBLIC_IMAGE_BUCKET } from '@/utils/constants';
-import { Request } from 'express';
 
 export function toRecipeDto(doc: any): IRecipeDTO {
   const recipe = toDtoWithImageUrl<any>(doc, 'imagePath');

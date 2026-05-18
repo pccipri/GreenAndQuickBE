@@ -18,6 +18,7 @@ export interface IUser {
   phoneNumber: string | null;
   googleId: string | null;
   isActive: boolean;
+  stripeCustomerId: string | null; // added — stored on first Stripe card payment (Feature 04)
 }
 
 export interface UserSettingsDto {
@@ -34,4 +35,7 @@ export interface UserDto extends Omit<IUser, '_id' | 'avatarPath' | 'password' |
   userSettings?: UserSettingsDto;
 }
 
-export type ICreateUserDTO = Omit<IUser, '_id' | 'createdAt' | 'updatedAt' | 'isActive'>;
+export type ICreateUserDTO = Omit<
+  IUser,
+  '_id' | 'createdAt' | 'updatedAt' | 'isActive' | 'stripeCustomerId'
+>;

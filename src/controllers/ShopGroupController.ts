@@ -1,65 +1,87 @@
 import { Response, Request, Router } from 'express';
-import {
-  createShopGroup,
-  deleteShopGroup,
-  getAllShopGroups,
-  getShopGroupById,
-  updateShopGroup,
-} from '../services/ShopGroupService';
+import { shopGroupService } from '../services/ShopGroupService';
+import { asyncHandler } from '@/middlewares/asyncHandler';
+import { requireAuth, requireRole } from '@/middlewares/isAuthenticated';
+import { IdParams, SlugParams } from '@/models/generic/Routes';
 
 const router = Router();
 
-// Create shop group
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const group = await createShopGroup(req.body);
+/**
+ * POST /shopGroup
+ * Create a shop group (requires role 'shopOwner')
+ */
+router.post(
+  '/',
+  requireAuth,
+  requireRole(['shopOwner']),
+  asyncHandler(async (req: Request, res: Response) => {
+    const group = await shopGroupService.create(req.user!._id, req.body);
     res.status(201).json(group);
-  } catch (error: any) {
-    res.status(400).json({ error: 'shopGroup.createFailed' });
-  }
-});
+  }),
+);
 
-// Get all shop groups
-router.get('/', async (_req, res) => {
-  try {
-    const groups = await getAllShopGroups();
+/**
+ * GET /shopGroup
+ * List all active shop groups (Public)
+ */
+router.get(
+  '/',
+  asyncHandler(async (_req, res) => {
+    const groups = await shopGroupService.list();
     res.json(groups);
-  } catch (error: any) {
-    res.status(500).json({ error: 'shopGroup.fetchAllFailed' });
-  }
-});
+  }),
+);
 
-// Get shop group by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const group = await getShopGroupById(req.params.id);
-    if (!group) res.status(404).json({ error: 'shopGroup.notFound' });
+/**
+ * GET /shopGroup/slug/:slug
+ * Get shop group details by slug (Public)
+ */
+router.get(
+  '/slug/:slug',
+  asyncHandler(async (req: Request<SlugParams>, res: Response) => {
+    const group = await shopGroupService.getBySlug(req.params.slug);
     res.json(group);
-  } catch (error: any) {
-    res.status(500).json({ error: 'shopGroup.fetchFailed' });
-  }
-});
+  }),
+);
 
-// Update shop group
-router.put('/:id', async (req, res) => {
-  try {
-    const updated = await updateShopGroup(req.params.id, req.body);
-    if (!updated) res.status(404).json({ error: 'shopGroup.notFound' });
+/**
+ * GET /shopGroup/:id
+ * Get shop group details by ID (Public)
+ */
+router.get(
+  '/:id',
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const group = await shopGroupService.getById(req.params.id);
+    res.json(group);
+  }),
+);
+
+/**
+ * PUT /shopGroup/:id
+ * Update shop group details (Owner or Admin)
+ */
+router.put(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const isAdmin = req.user?.role === 'admin';
+    const updated = await shopGroupService.update(req.params.id, req.body, req.user!._id, isAdmin);
     res.json(updated);
-  } catch (error: any) {
-    res.status(400).json({ error: 'shopGroup.updateFailed' });
-  }
-});
+  }),
+);
 
-// Delete shop group
-router.delete('/:id', async (req, res) => {
-  try {
-    const success = await deleteShopGroup(req.params.id);
-    if (!success) res.status(404).json({ error: 'shopGroup.notFound' });
+/**
+ * DELETE /shopGroup/:id
+ * Delete shop group (Admin or Owner)
+ */
+router.delete(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const isAdmin = req.user?.role === 'admin';
+    await shopGroupService.remove(req.params.id, req.user!._id, isAdmin);
     res.json({ message: 'Shop group deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: 'shopGroup.deleteFailed' });
-  }
-});
+  }),
+);
 
 export default router;

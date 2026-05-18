@@ -15,6 +15,7 @@ export interface UserDocument extends Document {
   userSettings?: Types.ObjectId;
   isActive: boolean;
   googleId: string | null;
+  stripeCustomerId: string | null; // added — stored on first Stripe card payment (Feature 04)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +41,10 @@ const userSchema = new Schema<UserDocument>(
       type: String,
       unique: true,
       sparse: true,
+    },
+    stripeCustomerId: {
+      type: String,
+      default: null,
     },
   },
   { timestamps: true },

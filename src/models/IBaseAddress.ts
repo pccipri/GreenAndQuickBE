@@ -1,4 +1,4 @@
-export default interface IBaseAddress {
+export interface IBaseAddress {
   street: string;
   city: string;
   county: string;

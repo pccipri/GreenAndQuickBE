@@ -1,86 +1,135 @@
 import { Request, Response, Router } from 'express';
-import { IOrder } from '../models/IOrder';
 import {
   createOrder,
   deleteOrder,
   getAllOrders,
   getOrderById,
   getOrdersByUser,
+  getOrdersByShop,
   updateOrder,
 } from '../services/OrderService';
 import { IdParams } from '@/models/generic/Routes';
+import { requireAuth, requireRole, requireActiveUser } from '@/middlewares/isAuthenticated';
+import { asyncHandler } from '@/middlewares/asyncHandler';
 
 const router = Router();
 
 // Create a new order
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const order: IOrder = req.body;
-    const response = await createOrder(order);
+// NOTE: Orders should primarily be created via /checkout or Stripe Webhooks.
+// This endpoint is restricted to Admins for manual entries.
+router.post(
+  '/',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['admin']),
+  asyncHandler(async (req: Request, res: Response) => {
+    const response = await createOrder(req.body);
     res.status(201).json(response);
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.createFailed' });
-  }
-});
+  }),
+);
 
 // Get all orders
-router.get('/', async (_req: Request, res: Response) => {
-  try {
+router.get(
+  '/',
+  requireAuth,
+  requireRole(['admin']),
+  asyncHandler(async (_req: Request, res: Response) => {
     const orders = await getAllOrders();
     res.json(orders);
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.fetchAllFailed' });
-  }
-});
+  }),
+);
 
 // Get order by ID
-router.get('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
+router.get(
+  '/:id',
+  requireAuth,
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const order = await getOrderById(req.params.id);
     if (!order) {
-      res.status(404).json({ error: 'order.notFound' });
+      return res.status(404).json({ error: 'order.notFound' });
     }
     res.json(order);
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.fetchFailed' });
-  }
-});
+  }),
+);
 
 // Get orders by user
-router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const { id: userId } = req.params;
-    const orders = await getOrdersByUser(userId);
+router.get(
+  '/user/:id',
+  requireAuth,
+  requireActiveUser,
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    // Only the user themselves or an admin can fetch these orders
+    if (req.user!.role !== 'admin' && req.user!._id.toString() !== req.params.id) {
+      return res.status(403).json({ error: 'auth.forbidden' });
+    }
+
+    const orders = await getOrdersByUser(req.params.id);
     res.json(orders);
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.fetchByUserFailed' });
-  }
-});
+  }),
+);
+
+// Get orders by shop (for Shop Owners)
+router.get(
+  '/shop/:id',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['shopOwner', 'admin']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const orders = await getOrdersByShop(req.params.id);
+    res.json(orders);
+  }),
+);
+
+// Update payment status (e.g. mark cash as paid)
+router.patch(
+  '/:id/payment-status',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['shopOwner', 'admin']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const { paymentStatus } = req.body;
+    const updatedOrder = await updateOrder(
+      req.params.id,
+      { paymentStatus },
+      req.user!._id.toString(),
+    );
+
+    if (!updatedOrder) {
+      return res.status(404).json({ error: 'order.notFound' });
+    }
+
+    res.json(updatedOrder);
+  }),
+);
 
 // Update order
-router.put('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const updatedOrder = await updateOrder(req.params.id, req.body);
+router.put(
+  '/:id',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['admin', 'shopOwner']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const updatedOrder = await updateOrder(req.params.id, req.body, req.user!._id.toString());
     if (!updatedOrder) {
-      res.status(404).json({ error: 'order.notFound' });
+      return res.status(404).json({ error: 'order.notFound' });
     }
     res.json(updatedOrder);
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.updateFailed' });
-  }
-});
+  }),
+);
 
 // Delete order
-router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
+router.delete(
+  '/:id',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['admin']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const deleted = await deleteOrder(req.params.id);
     if (!deleted) {
-      res.status(404).json({ error: 'order.notFound' });
+      return res.status(404).json({ error: 'order.notFound' });
     }
     res.json({ message: 'Order deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: 'order.deleteFailed' });
-  }
-});
+  }),
+);
 
 export default router;
