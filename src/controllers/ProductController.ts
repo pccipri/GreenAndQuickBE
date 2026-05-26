@@ -3,7 +3,11 @@ import { productService } from '@/services/ProductService';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { requireAuth } from '@/middlewares/isAuthenticated';
 import { validate } from '@/middlewares/validate';
-import { updateProductSchema, productListQuerySchema } from '@/validations/productValidation';
+import {
+  updateProductSchema,
+  productListQuerySchema,
+  searchProductsQuerySchema,
+} from '@/validations/productValidation';
 import { upload } from '@/middlewares/upload';
 import { Types } from 'mongoose';
 import {
@@ -27,6 +31,24 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const result = await productService.list(req.query as any);
     res.json(result);
+  }),
+);
+
+/**
+ * GET /products/search
+ * Search products by ingredient name (Public)
+ */
+router.get(
+  '/search',
+  validate(searchProductsQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { q, limit } = req.query;
+    const { items: products } = await productService.searchProductsByIngredient(
+      q as string,
+      Number(limit),
+    );
+
+    res.json(products);
   }),
 );
 

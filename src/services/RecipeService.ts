@@ -1,6 +1,7 @@
 import { HttpError } from '@/middlewares/errorHandler';
 import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { Recipe } from '@/schemas/RecipeSchema';
+import { productService } from '@/services/ProductService';
 import { SortOrder, Types } from 'mongoose';
 
 type ListQuery = {
@@ -145,5 +146,30 @@ export const recipeService = {
       total,
       pages: Math.ceil(total / limit),
     };
+  },
+
+  /**
+   * Fetches matched products for a list of ingredient names in parallel.
+   * @param recipeId The ID of the recipe.
+   * @param ingredients Array of ingredient names to search for.
+   * @returns Array of ingredient matches.
+   */
+  async shopRecipeIngredients(recipeId: string, ingredients: string[]) {
+    if (!Types.ObjectId.isValid(recipeId)) throw new HttpError(400, 'recipe.invalidId');
+
+    const uniqueIngredients = [...new Set(ingredients)];
+
+    const results = await Promise.all(
+      uniqueIngredients.map(async (ingredient) => {
+        const { items, total } = await productService.searchProductsByIngredient(ingredient, 5);
+        return {
+          ingredient,
+          matches: items,
+          foundCount: total,
+        };
+      }),
+    );
+
+    return results;
   },
 };

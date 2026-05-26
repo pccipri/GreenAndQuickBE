@@ -7,6 +7,7 @@ import {
   DURATION_TYPES,
 } from '@/utils/constants';
 import { jsonString } from '@/utils/helpers';
+import { Types } from 'mongoose';
 import { z } from 'zod';
 
 const ingredientSchema = z.object({
@@ -56,4 +57,15 @@ export const createRecipeSchema = z.object({
 export const updateRecipeSchema = createRecipeSchema.partial().extend({
   removeMainImage: z.preprocess((val) => val === 'true' || val === true, z.boolean()).optional(),
   removeInstructionImages: jsonString(z.array(z.boolean())).optional(),
+});
+
+export const recipeIdParamSchema = z.object({
+  id: z.string().refine(Types.ObjectId.isValid, 'recipe.invalidId'),
+});
+
+export const shopRecipeSchema = z.object({
+  ingredients: z
+    .array(z.string())
+    .min(1, 'recipe.ingredientsRequired')
+    .max(30, 'recipe.tooManyIngredients'),
 });

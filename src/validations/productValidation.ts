@@ -26,6 +26,11 @@ export const updateProductSchema = createProductSchema.partial().extend({
   // `newImages` are handled by multer, not directly validated here
 });
 
+export const searchProductsQuerySchema = z.object({
+  q: z.string().min(1, 'product.searchQueryRequired'),
+  limit: z.coerce.number().int().min(1).max(30).default(10).optional(),
+});
+
 export const productListQuerySchema = z.object({
   search: z.string().optional(),
   category: z.string().optional(), // category slug

@@ -108,4 +108,36 @@ export const productService = {
     if (!deleted) throw new HttpError(404, 'product.notFound');
     return { ok: true };
   },
+
+  /**
+   * Searches for products by ingredient name using text index.
+   * Filters for available and in-stock products.
+   * @param query The search query (ingredient name).
+   * @param limit The maximum number of results to return (default 10, max 30).
+   * @returns An array of product DTOs.
+   */
+  async searchProductsByIngredient(query: string, limit: number = 10) {
+    const effectiveLimit = Math.min(30, Math.max(1, limit));
+
+    const filter = {
+      $text: { $search: query },
+      isAvailable: true,
+      stock: { $gt: 0 },
+    };
+
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .select({ score: { $meta: 'textScore' } as any }) // Select text score for relevance
+        .sort({ score: { $meta: 'textScore' } as any }) // Sort by text score
+        .populate('shopId', 'name slug logo') // Populate shop details
+        .limit(effectiveLimit)
+        .lean(),
+      Product.countDocuments(filter),
+    ]);
+
+    return {
+      items: products.map(toProductDto),
+      total,
+    };
+  },
 };

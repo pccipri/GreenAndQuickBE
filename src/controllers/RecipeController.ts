@@ -14,7 +14,12 @@ import { Recipe } from '@/schemas/RecipeSchema';
 import { Types } from 'mongoose';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { validate } from '@/middlewares/validate';
-import { createRecipeSchema, updateRecipeSchema } from '@/validations/recipeValidation';
+import {
+  createRecipeSchema,
+  updateRecipeSchema,
+  recipeIdParamSchema,
+  shopRecipeSchema,
+} from '@/validations/recipeValidation';
 
 const router = Router();
 
@@ -293,6 +298,22 @@ router.delete(
     await deletePublicImageFolder(`recipes/${req.params.id}/instructions`);
 
     const result = await recipeService.remove(req.params.id, req.user!._id, isAdmin);
+    res.json(result);
+  }),
+);
+
+/**
+ * POST /recipes/:id/shop
+ * Fetch matched products for all ingredients in a recipe at once (Public)
+ */
+router.post(
+  '/:id/shop',
+  validate(recipeIdParamSchema, 'params'),
+  validate(shopRecipeSchema),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const { ingredients } = req.body;
+    const result = await recipeService.shopRecipeIngredients(req.params.id, ingredients);
+
     res.json(result);
   }),
 );
