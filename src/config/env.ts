@@ -25,6 +25,7 @@ export const configEnvs = {
   ENCRYPTION_KEY: requireEnv('ENCRYPTION_KEY'),
   PASSPORT_SECRET: requireEnv('PASSPORT_SECRET'),
   STRIPE_SECRET_KEY: requireEnv('STRIPE_SECRET_KEY'),
+  STRIPE_WEBHOOK_SECRET: requireEnv('STRIPE_WEBHOOK_SECRET'),
   ACCESS_SECRET: requireEnv('JWT_SECRET'),
   GOOGLE_CLIENT_ID: requireEnv('GOOGLE_CLIENT_ID'),
   GOOGLE_CLIENT_SECRET: requireEnv('GOOGLE_CLIENT_SECRET'),
@@ -36,6 +37,7 @@ export const configEnvs = {
   SMTP_USER: requireEnv('SMTP_USER'),
   SMTP_PASS: requireEnv('SMTP_PASS'),
   PASSWORD_RESET_URL: requireEnv('PASSWORD_RESET_URL'),
+  FRONTEND_URL: requireEnv('FRONTEND_URL'),
   // TO-DO: Investigate the STATIC_DIR variable usage and decide if it should be added here or handled differently
   // STATIC_DIR: requireEnv('STATIC_DIR'),
 };

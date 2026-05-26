@@ -4,5 +4,17 @@
   "resetPasswordSubject": "Reset Your Password",
   "resetPasswordBody": "Hello {{userName}},\n\nYou requested a password reset. Click the link below to reset your password:\n{{link}}\n\nThis link expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.",
   "welcomeSubject": "Welcome to Green Quick!",
-  "welcomeBody": "Hello {{userName}},\n\nWelcome to Green Quick! Your account has been successfully created.\n\nYou can now start exploring our platform."
+  "welcomeBody": "Hello {{userName}},\n\nWelcome to Green Quick! Your account has been successfully created.\n\nYou can now start exploring our platform.",
+  "orderPlacedSubject": "Your Green Quick Order #{{orderId}} is Placed!",
+  "orderPlacedBody": "Hello {{userName}},<br/><br/>Thank you for your order! Your order #{{orderId}} has been successfully placed and is awaiting confirmation from the shop. We'll send you another email once it's confirmed.<br/><br/><b>Order Summary:</b><br/>{{orderSummaryHtml}}<br/><br/><b>Total:</b> {{totalAmount}}<br/><b>Payment Method:</b> {{paymentMethod}}<br/><b>Delivery Address:</b> {{deliveryAddress}}<br/><br/>Thank you for shopping with Green Quick!",
+  "orderConfirmedSubject": "Your Green Quick Order #{{orderId}} is Confirmed!",
+  "orderConfirmedBody": "Hello {{userName}},<br/><br/>Great news! Your order #{{orderId}} has been confirmed by the shop and is being prepared for shipment. We'll let you know as soon as it's on its way!<br/><br/>Thank you for shopping with Green Quick!",
+  "orderShippedSubject": "Your Green Quick Order #{{orderId}} has Shipped!",
+  "orderShippedBody": "Hello {{userName}},<br/><br/>Your order #{{orderId}} is on its way! You can track its progress here: {{trackingLink}}<br/><br/>Thank you for shopping with Green Quick!",
+  "orderDeliveredSubject": "Your Green Quick Order #{{orderId}} has been Delivered!",
+  "orderDeliveredBody": "Hello {{userName}},<br/><br/>Your order #{{orderId}} has been successfully delivered! We hope you enjoy your items.<br/><br/>We'd love to hear about your experience. Please consider leaving a review for your products and shops:<br/>{{reviewLinksHtml}}<br/><br/>Thank you for shopping with Green Quick!",
+  "orderCancelledSubject": "Your Green Quick Order #{{orderId}} has been Cancelled",
+  "orderCancelledBody": "Hello {{userName}},<br/><br/>Your order #{{orderId}} has been cancelled. <br/><br/><b>Reason:</b> {{cancellationReason}}<br/><br/>{{refundStatusHtml}}<br/><br/>If you have any questions, please contact support.<br/><br/>Thank you for shopping with Green Quick!",
+  "orderCancelledRefundedStatus": "The amount of {{totalAmount}} has been refunded to your original payment method. The refund should appear in your account within 5-10 business days.",
+  "orderCancelledRefundPendingStatus": "A refund for the amount of {{totalAmount}} has been initiated and is currently processing. We will notify you once the refund is complete."
 }

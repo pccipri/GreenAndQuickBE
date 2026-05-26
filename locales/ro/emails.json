@@ -4,5 +4,17 @@
   "resetPasswordSubject": "Resetează-ți Parola",
   "resetPasswordBody": "Salut {{userName}},\n\nAi solicitat resetarea parolei. Fă clic pe link-ul de mai jos pentru a reseta parola:\n{{link}}\n\nAcest link expiră în 15 minute.\n\nDacă nu ai solicitat acest lucru, te rugăm să ignori acest email.",
   "welcomeSubject": "Bine ai venit la Green Quick!",
-  "welcomeBody": "Salut {{userName}},\n\nBine ai venit la Green Quick! Contul tău a fost creat cu succes.\n\nAcum poți începe să explorezi platforma noastră."
+  "welcomeBody": "Salut {{userName}},\n\nBine ai venit la Green Quick! Contul tău a fost creat cu succes.\n\nAcum poți începe să explorezi platforma noastră.",
+  "orderPlacedSubject": "Comanda ta Green Quick #{{orderId}} a fost plasată!",
+  "orderPlacedBody": "Salut {{userName}},<br/><br/>Îți mulțumim pentru comandă! Comanda ta #{{orderId}} a fost plasată cu succes și așteaptă confirmarea de la magazin. Îți vom trimite un alt email odată ce va fi confirmată.<br/><br/><b>Sumar Comandă:</b><br/>{{orderSummaryHtml}}<br/><br/><b>Total:</b> {{totalAmount}}<br/><b>Metodă de Plată:</b> {{paymentMethod}}<br/><b>Adresă de Livrare:</b> {{deliveryAddress}}<br/><br/>Îți mulțumim că ai ales Green Quick!",
+  "orderConfirmedSubject": "Comanda ta Green Quick #{{orderId}} a fost confirmată!",
+  "orderConfirmedBody": "Salut {{userName}},<br/><br/>Vesti bune! Comanda ta #{{orderId}} a fost confirmată de magazin și este în curs de pregătire pentru expediere. Te vom anunța imediat ce va fi pe drum!<br/><br/>Îți mulțumim că ai ales Green Quick!",
+  "orderShippedSubject": "Comanda ta Green Quick #{{orderId}} a fost expediată!",
+  "orderShippedBody": "Salut {{userName}},<br/><br/>Comanda ta #{{orderId}} este pe drum! Poți urmări progresul aici: {{trackingLink}}<br/><br/>Îți mulțumim că ai ales Green Quick!",
+  "orderDeliveredSubject": "Comanda ta Green Quick #{{orderId}} a fost livrată!",
+  "orderDeliveredBody": "Salut {{userName}},<br/><br/>Comanda ta #{{orderId}} a fost livrată cu succes! Sperăm să te bucuri de produsele tale.<br/><br/>Ne-ar plăcea să auzim despre experiența ta. Te rugăm să lași o recenzie pentru produsele și magazinele tale:<br/>{{reviewLinksHtml}}<br/><br/>Îți mulțumim că ai ales Green Quick!",
+  "orderCancelledSubject": "Comanda ta Green Quick #{{orderId}} a fost anulată",
+  "orderCancelledBody": "Salut {{userName}},<br/><br/>Comanda ta #{{orderId}} a fost anulată. <br/><br/><b>Motiv:</b> {{cancellationReason}}<br/><br/>{{refundStatusHtml}}<br/><br/>Dacă ai întrebări, te rugăm să contactezi suportul.<br/><br/>Îți mulțumim că ai ales Green Quick!",
+  "orderCancelledRefundedStatus": "Suma de {{totalAmount}} a fost rambursată pe metoda ta de plată originală. Rambursarea ar trebui să apară în contul tău în 5-10 zile lucrătoare.",
+  "orderCancelledRefundPendingStatus": "O rambursare pentru suma de {{totalAmount}} a fost inițiată și este în curs de procesare. Te vom notifica odată ce rambursarea este completă."
 }

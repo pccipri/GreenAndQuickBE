@@ -26,6 +26,7 @@ export interface IOrderDocument extends Document {
   paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
   stripePaymentIntentId: string | null;
   status: 'placed' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  changedBy?: Types.ObjectId; // Virtual field used for statusHistory updates
   statusHistory: IOrderStatusHistoryEntryDocument[];
   deliveryAddress: IAddress;
   pickupAddress: IBaseAddress;
@@ -80,5 +81,25 @@ const orderSchema = new Schema<IOrderDocument>(
   },
   { timestamps: true },
 );
+
+// Middleware to automatically append to statusHistory when status changes
+orderSchema.pre('save', function (this: IOrderDocument, next: any) {
+  if (this.isModified('status')) {
+    const newStatus = this.status;
+    const history = this.statusHistory || [];
+    const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+
+    // Only push if status actually changed or history is empty
+    if (!lastEntry || lastEntry.status !== newStatus) {
+      // 'changedBy' is set in the Service layer before calling .save()
+      this.statusHistory.push({
+        status: newStatus,
+        changedAt: new Date(),
+        changedBy: this.changedBy || this.customerId,
+      } as IOrderStatusHistoryEntryDocument);
+    }
+  }
+  next();
+});
 
 export const Order = mongoose.model<IOrderDocument>('Order', orderSchema);

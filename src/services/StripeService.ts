@@ -42,4 +42,24 @@ export const stripeService = {
       throw new HttpError(500, 'Failed to get or create Stripe customer.');
     }
   },
+
+  /**
+   * Issues a full refund for a given Stripe Payment Intent.
+   * This is used when a card-paid order is cancelled.
+   * @param paymentIntentId The Stripe Payment Intent ID associated with the order.
+   * @returns A Promise that resolves to the Stripe Refund object.
+   * @throws HttpError if the refund fails or the payment intent is invalid.
+   */
+  async refundOrder(paymentIntentId: string) {
+    try {
+      const refund = await stripe.refunds.create({
+        payment_intent: paymentIntentId,
+      });
+      return refund;
+    } catch (error: any) {
+      console.error('Stripe Refund Error:', error);
+      // Common errors: refund already exists, payment_intent not found, or not succeeded
+      throw new HttpError(400, error.message || 'Failed to process Stripe refund.');
+    }
+  },
 };

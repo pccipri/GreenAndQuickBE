@@ -2,6 +2,14 @@ export const USER_ROLES = ['customer', 'admin', 'shopOwner'] as const;
 
 export const ORDER_STATUSES = ['placed', 'confirmed', 'shipped', 'delivered', 'cancelled'] as const;
 
+export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
+  placed: ['confirmed', 'cancelled'],
+  confirmed: ['shipped', 'cancelled'],
+  shipped: ['delivered'],
+  delivered: [],
+  cancelled: [],
+};
+
 export const DURATION_TYPES = ['MINUTES', 'HOURS'] as const;
 
 export const INGREDIENT_UNITS = ['g', 'kg', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'pcs'] as const;

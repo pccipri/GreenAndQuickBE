@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "seedAdmin": "tsx seeds/seedAdmin.ts",
     "seedCategories": "tsx seeds/seedCategories.ts",
-    "stripe_webhook": "stripe listen --forward-to localhost:3000/webhook",
+    "stripeWebhook": "stripe listen --forward-to localhost:8080/api/webhooks/stripe",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
