@@ -20,6 +20,8 @@ export const MEAL_TYPES = ['BREAKFAST', 'LUNCH', 'DINNER', 'SNACK', 'DESSERT'] a
 
 export const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const;
 
+export const REVIEW_TARGET_TYPES = ['product', 'shop', 'recipe'] as const;
+
 export const NUTRIENT_LABELS = [
   'Energy',
   'Fat',

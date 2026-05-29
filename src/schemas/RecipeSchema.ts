@@ -82,7 +82,7 @@ const recipeSchema = new Schema(
     imagePath: { type: String, default: null },
     nutritionValues: { type: [nutritionValueSchema], required: false, default: undefined },
     isPublished: { type: Boolean, default: true, index: true },
-    rating: { type: Number, default: 0, min: 0, max: 5, index: true },
+    averageRating: { type: Number, default: 0, min: 0, max: 5, index: true },
     reviewCount: { type: Number, default: 0, min: 0 },
     slug: { type: String, trim: true, lowercase: true, index: true },
   },
@@ -114,9 +114,16 @@ recipeSchema.pre('validate', function () {
   }
 });
 
+recipeSchema.post(['findOneAndDelete', 'deleteOne'], async function (doc) {
+  if (doc) {
+    const Review = mongoose.model('review');
+    await Review.deleteMany({ targetType: 'recipe', targetId: doc._id });
+  }
+});
+
 export type RecipeDoc = InferSchemaType<typeof recipeSchema> & {
   _id: Types.ObjectId;
 };
 
 export const Recipe: Model<RecipeDoc> =
-  mongoose.models.Recipe || mongoose.model<RecipeDoc>('Recipe', recipeSchema);
+  mongoose.models.recipe || mongoose.model<RecipeDoc>('recipe', recipeSchema);

@@ -32,6 +32,8 @@ const shopSchema = new Schema(
       default: null,
     },
     isActive: { type: Boolean, default: true, index: true },
+    averageRating: { type: Number, default: 0, min: 0, max: 5, index: true },
+    reviewCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );
@@ -51,9 +53,18 @@ shopSchema.pre(['updateOne', 'findOneAndUpdate'], function () {
   }
 });
 
+shopSchema.post(['findOneAndDelete', 'deleteOne'], async function (doc) {
+  if (doc) {
+    const Review = mongoose.model('review');
+    // When a shop is deleted, we remove shop reviews.
+    // Note: Product reviews are handled separately by the Product schema cascade.
+    await Review.deleteMany({ targetType: 'shop', targetId: doc._id });
+  }
+});
+
 export type ShopDoc = InferSchemaType<typeof shopSchema> & {
   _id: Types.ObjectId;
 };
 
 export const Shop: Model<ShopDoc> =
-  mongoose.models.Shop || mongoose.model<ShopDoc>('Shop', shopSchema);
+  mongoose.models.shop || mongoose.model<ShopDoc>('shop', shopSchema);

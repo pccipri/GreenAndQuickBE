@@ -191,12 +191,26 @@ export async function sendOrderDeliveredEmail(user: IUser, order: IOrder, langua
     orderId: order._id,
   });
 
-  // Placeholder for review links - will be dynamically generated based on order items and shops
+  const uniqueShops = new Map();
+  order.items.forEach((item: any) => {
+    const shop = item.shopId;
+    if (shop && !uniqueShops.has(shop._id.toString())) {
+      uniqueShops.set(shop._id.toString(), shop);
+    }
+  });
+
   const reviewLinksHtml = `
     <p>Thank you for your purchase! Please consider leaving a review for the products and shops:</p>
-    <ul>
-      ${order.items.map((item) => `<li><a href="${configEnvs.FRONTEND_URL}/products/${(item.productId as any).slug}/review">Review ${(item.productId as any).name}</a> from <a href="${configEnvs.FRONTEND_URL}/shops/${(item.shopId as any).slug}/review">${(item.shopId as any).name}</a></li>`).join('')}
-    </ul>
+    <h3>Products:</h3>
+    <ul>${order.items.map((item) => `<li><a href="${configEnvs.FRONTEND_URL}/products/${(item.productId as any).slug}">Review ${(item.productId as any).name}</a></li>`).join('')}</ul>
+    
+    <h3>Shops:</h3>
+    <ul>${Array.from(uniqueShops.values())
+      .map(
+        (shop: any) =>
+          `<li><a href="${configEnvs.FRONTEND_URL}/shops/${shop.slug}">Review ${shop.name}</a></li>`,
+      )
+      .join('')}</ul>
   `;
 
   const body = i18next

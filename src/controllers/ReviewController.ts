@@ -1,98 +1,108 @@
 import { Router, Request, Response } from 'express';
+import { requireAuth, requireActiveUser, requireRole } from '@/middlewares/isAuthenticated';
+import { asyncHandler } from '@/middlewares/asyncHandler';
+import { validate } from '@/middlewares/validate';
+import {
+  createReviewSchema,
+  listReviewsQuerySchema,
+  reviewIdParamSchema,
+  bulkDeleteReviewsSchema,
+  adminListReviewsQuerySchema,
+} from '@/validations/reviewValidation';
 import {
   createReview,
   deleteReview,
-  getAllReviews,
-  getReviewById,
-  getReviewsByProduct,
-  getReviewsByShop,
-  getReviewsByUser,
-  updateReview,
+  listReviews,
+  adminListReviews,
+  bulkDeleteReviews,
 } from '../services/ReviewService';
+import { toReviewDto } from '@/presenters/ReviewPresenter';
+import { IdParams } from '@/models/generic/Routes';
 
 const router = Router();
 
-// Create review
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const review = await createReview(req.body);
-    res.status(201).json(review);
-  } catch (error: any) {
-    res.status(400).json({ error: 'review.createFailed' });
-  }
-});
+/**
+ * GET /reviews
+ * List reviews for a specific target with pagination (Public)
+ */
+router.get(
+  '/',
+  validate(listReviewsQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await listReviews(req.query as any);
+    res.json({
+      ...result,
+      reviews: result.reviews.map(toReviewDto),
+    });
+  }),
+);
 
-// Get all reviews
-router.get('/', async (_req, res) => {
-  try {
-    const reviews = await getAllReviews();
-    res.json(reviews);
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.fetchAllFailed' });
-  }
-});
+/**
+ * POST /reviews
+ * Create a review (requires auth + isActive)
+ */
+router.post(
+  '/',
+  requireAuth,
+  requireActiveUser,
+  validate(createReviewSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const review = await createReview(req.user!._id, req.user!.isActive, req.body);
+    // Convert to DTO to ensure consistent output format
+    res.status(201).json(toReviewDto(review));
+  }),
+);
 
-// Get review by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const review = await getReviewById(req.params.id);
-    if (!review) res.status(404).json({ error: 'review.notFound' });
-    res.json(review);
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.fetchFailed' });
-  }
-});
+/**
+ * DELETE /reviews/:id
+ * Delete a review (Author or Admin)
+ */
+router.delete(
+  '/:id',
+  requireAuth,
+  requireActiveUser,
+  validate(reviewIdParamSchema, 'params'),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const isAdmin = req.user?.role === 'admin';
+    await deleteReview(req.params.id, req.user!._id, isAdmin);
+    res.status(204).end();
+  }),
+);
 
-// Get reviews by user
-router.get('/user/:userId', async (req, res) => {
-  try {
-    const reviews = await getReviewsByUser(req.params.userId);
-    res.json(reviews);
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.fetchByUserFailed' });
-  }
-});
+/**
+ * GET /reviews/admin
+ * List and search all reviews (Admin only)
+ */
+router.get(
+  '/admin',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['admin']),
+  validate(adminListReviewsQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await adminListReviews(req.query as any);
+    res.json({
+      ...result,
+      reviews: result.reviews.map(toReviewDto),
+    });
+  }),
+);
 
-// Get reviews by product
-router.get('/product/:productId', async (req, res) => {
-  try {
-    const reviews = await getReviewsByProduct(req.params.productId);
-    res.json(reviews);
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.fetchByProductFailed' });
-  }
-});
-
-// Get reviews by shop
-router.get('/shop/:shopId', async (req, res) => {
-  try {
-    const reviews = await getReviewsByShop(req.params.shopId);
-    res.json(reviews);
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.fetchByShopFailed' });
-  }
-});
-
-// Update review
-router.put('/:id', async (req, res) => {
-  try {
-    const updated = await updateReview(req.params.id, req.body);
-    if (!updated) res.status(404).json({ error: 'review.notFound' });
-    res.json(updated);
-  } catch (error: any) {
-    res.status(400).json({ error: 'review.updateFailed' });
-  }
-});
-
-// Delete review
-router.delete('/:id', async (req, res) => {
-  try {
-    const success = await deleteReview(req.params.id);
-    if (!success) res.status(404).json({ error: 'review.notFound' });
-    res.json({ message: 'Review deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: 'review.deleteFailed' });
-  }
-});
+/**
+ * DELETE /admin/reviews
+ * Bulk delete reviews (Admin only)
+ */
+router.delete(
+  '/admin',
+  requireAuth,
+  requireActiveUser,
+  requireRole(['admin']),
+  validate(bulkDeleteReviewsSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { ids } = req.body;
+    const result = await bulkDeleteReviews(ids);
+    res.json(result);
+  }),
+);
 
 export default router;

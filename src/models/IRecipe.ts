@@ -53,7 +53,7 @@ export interface IRecipe {
   imagePath: string | null;
   nutritionValues: NutritionValue[] | null;
   isPublished: boolean;
-  rating: number;
+  averageRating: number;
   reviewCount: number;
   slug: string;
   createdAt: Date;

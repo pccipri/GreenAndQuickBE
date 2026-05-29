@@ -10,6 +10,8 @@ export interface IShop {
   ownerId: string;
   location: IShopLocation | null;
   isActive: boolean;
+  averageRating: number;
+  reviewCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,10 +1,11 @@
 export interface IReview {
   _id: string;
-  user: string;
-  product?: string;
-  shop?: string;
-  rating: number;
-  comment?: string;
+  targetType: 'product' | 'shop' | 'recipe';
+  targetId: string;
+  authorId: string;
+  rating: number; // integer 1–5
+  comment: string | null;
+  isVerifiedPurchase: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

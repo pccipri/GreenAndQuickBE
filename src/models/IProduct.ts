@@ -11,6 +11,8 @@ export default interface IProduct {
   isAvailable: boolean;
   stock: number;
   lowStockThreshold: number;
+  averageRating: number;
+  reviewCount: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -33,6 +33,8 @@ const productSchema = new Schema(
     isAvailable: { type: Boolean, default: true, index: true },
     stock: { type: Number, default: 0, min: 0 },
     lowStockThreshold: { type: Number, default: 5, min: 0 },
+    averageRating: { type: Number, default: 0, min: 0, max: 5, index: true },
+    reviewCount: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );
@@ -56,9 +58,17 @@ productSchema.pre(['updateOne', 'findOneAndUpdate'], function () {
   }
 });
 
+productSchema.post(['findOneAndDelete', 'deleteOne'], async function (doc) {
+  if (doc) {
+    // Use mongoose.model to avoid circular dependency
+    const Review = mongoose.model('review');
+    await Review.deleteMany({ targetType: 'product', targetId: doc._id });
+  }
+});
+
 export type ProductDoc = InferSchemaType<typeof productSchema> & {
   _id: Types.ObjectId;
 };
 
 export const Product: Model<ProductDoc> =
-  mongoose.models.Product || mongoose.model<ProductDoc>('Product', productSchema);
+  mongoose.models.product || mongoose.model<ProductDoc>('product', productSchema);
