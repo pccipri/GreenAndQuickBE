@@ -5,7 +5,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import apiController from './config/v1';
-import Stripe from 'stripe';
 import cookieParser from 'cookie-parser';
 import passport from './config/passport';
 import { errorHandler } from './middlewares/errorHandler';
@@ -13,11 +12,6 @@ import { ensureStorageBuckets } from './libs/supabase/supabaseBuckets';
 import './config/i18n'; // Initialize i18n
 
 dotenv.config();
-
-export const stripe = new Stripe(configEnvs.STRIPE_SECRET_KEY, {
-  apiVersion: '2026-04-22.dahlia',
-  typescript: true,
-});
 
 const app = express();
 

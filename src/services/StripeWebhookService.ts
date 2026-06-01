@@ -5,14 +5,10 @@ import { Cart } from '@/schemas/CartSchema';
 import { User } from '@/schemas/UserSchema';
 import { SavedCard } from '@/schemas/SavedCardSchema';
 import { IUser } from '@/models/IUser';
-import { stripe } from '..';
+import { stripe } from '@/libs/stripe';
 import mongoose, { Types } from 'mongoose';
-import {
-  sendOrderPlacedEmail,
-  sendLowStockAlert,
-  sendEmail,
-  sendOrderCancelledEmail,
-} from '@/utils/mailer';
+import { sendOrderPlacedEmail, sendEmail, sendOrderCancelledEmail } from '@/utils/mailer';
+import { inventoryService } from './InventoryService';
 
 export const stripeWebhookService = {
   async handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
@@ -82,25 +78,8 @@ export const stripeWebhookService = {
         { session },
       );
 
-      // 4. Atomic Stock Reduction
-      for (const item of itemsToOrder) {
-        const product = await Product.findByIdAndUpdate(
-          item.productId,
-          {
-            $inc: { stock: -item.quantity },
-          },
-          { session, new: true },
-        ).populate('shopId');
-
-        // Feature 09: Low Stock Alerts
-        if (product && product.stock <= product.lowStockThreshold) {
-          const shop = product.shopId as any;
-          const owner = await User.findById(shop.ownerId);
-          if (owner) {
-            await sendLowStockAlert(owner as unknown as IUser, product.toObject() as any);
-          }
-        }
-      }
+      // 4. Atomic Stock Reduction and Alert Processing
+      await inventoryService.reduceStock(itemsToOrder, session);
 
       // 5. Cleanup Cart
       cart.items = cart.items.filter(
@@ -158,14 +137,11 @@ export const stripeWebhookService = {
           order.toObject() as any,
           preferredLanguage,
         );
-        const socketServer = (globalThis as any).io;
-        if (socketServer?.to) {
-          socketServer.to(user._id.toString()).emit('orderUpdate', order);
-        }
       }
     } catch (error) {
       await session.abortTransaction();
       console.error(`[Stripe Webhook] Transaction failed for PI ${paymentIntent.id}:`, error);
+      throw error;
     } finally {
       session.endSession();
     }
@@ -206,11 +182,7 @@ export const stripeWebhookService = {
       await order.save({ session });
 
       // Stock Replenishment
-      for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        }).session(session);
-      }
+      await inventoryService.restoreStock(order.items, session);
 
       await session.commitTransaction();
 
@@ -235,6 +207,7 @@ export const stripeWebhookService = {
     } catch (error) {
       await session.abortTransaction();
       console.error(`[Stripe Webhook] Refund handling failed for PI ${paymentIntentId}:`, error);
+      throw error;
     } finally {
       session.endSession();
     }

@@ -5,7 +5,6 @@ import { HttpError } from '@/middlewares/errorHandler';
 import { stripeService } from './StripeService';
 import { User } from '@/schemas/UserSchema';
 import { Shop } from '@/schemas/ShopSchema';
-import { Product } from '@/schemas/ProductSchema';
 import { IUser } from '@/models/IUser';
 import { ALLOWED_TRANSITIONS } from '@/utils/constants';
 import {
@@ -15,6 +14,7 @@ import {
   sendOrderDeliveredEmail,
 } from '@/utils/mailer';
 import { IOrderDocument } from '@/schemas/OrderSchema';
+import { inventoryService } from './InventoryService';
 
 // Create a new order
 export const createOrder = async (orderToSave: IOrder) => {
@@ -292,11 +292,7 @@ export const updateOrderStatus = async (
 
     // Stock Replenishment if cancelled
     if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-      for (const item of order.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: item.quantity },
-        }).session(session);
-      }
+      await inventoryService.restoreStock(order.items, session);
     }
 
     await session.commitTransaction();
@@ -388,11 +384,7 @@ export const cancelOrder = async (
     await order.save({ session });
 
     // Stock Replenishment
-    for (const item of order.items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: item.quantity },
-      }).session(session);
-    }
+    await inventoryService.restoreStock(order.items, session);
 
     await session.commitTransaction();
 
@@ -469,11 +461,7 @@ export const cancelOrderByShopOwner = async (
     await order.save({ session });
 
     // Stock Replenishment
-    for (const item of order.items) {
-      await Product.findByIdAndUpdate(item.productId, {
-        $inc: { stock: item.quantity },
-      }).session(session);
-    }
+    await inventoryService.restoreStock(order.items, session);
 
     await session.commitTransaction();
 

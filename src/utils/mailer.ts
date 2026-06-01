@@ -306,15 +306,51 @@ export async function sendLowStockAlert(user: IUser, product: any) {
     typeof (user.userSettings as any)?.preferredLanguage === 'string'
       ? (user.userSettings as any).preferredLanguage
       : 'en';
-  const subject = `Low Stock Alert: ${product.name}`;
 
-  const body = `
-    Hello ${user.firstName || 'Owner'},<br/><br/>
-    The stock for your product <b>${product.name}</b> has reached the threshold.<br/>
-    Current stock: <b>${product.stock}</b><br/>
-    Threshold: <b>${product.lowStockThreshold}</b><br/><br/>
-    Please restock soon to keep it available for customers.
-  `;
+  const subject = i18next.t('lowStockSubject', {
+    ns: 'emails',
+    lng: language,
+    productName: product.name,
+  });
+  const body = i18next.t('lowStockBody', {
+    ns: 'emails',
+    lng: language,
+    userName: user.firstName || 'Owner',
+    productName: product.name,
+    stock: product.stock,
+    threshold: product.lowStockThreshold,
+    link: `${configEnvs.FRONTEND_URL}/dashboard/inventory`,
+  });
+
+  await transporter.sendMail({
+    from: configEnvs.SMTP_USER,
+    to: user.email,
+    subject,
+    html: `<div>${body}</div>`,
+  });
+}
+
+/**
+ * Sends an out of stock alert to a shop owner. (Feature 09)
+ */
+export async function sendOutOfStockAlert(user: IUser, product: any) {
+  const language =
+    typeof (user.userSettings as any)?.preferredLanguage === 'string'
+      ? (user.userSettings as any).preferredLanguage
+      : 'en';
+
+  const subject = i18next.t('outOfStockSubject', {
+    ns: 'emails',
+    lng: language,
+    productName: product.name,
+  });
+  const body = i18next.t('outOfStockBody', {
+    ns: 'emails',
+    lng: language,
+    userName: user.firstName || 'Owner',
+    productName: product.name,
+    link: `${configEnvs.FRONTEND_URL}/dashboard/inventory`,
+  });
 
   await transporter.sendMail({
     from: configEnvs.SMTP_USER,

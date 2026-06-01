@@ -33,6 +33,7 @@ const productSchema = new Schema(
     isAvailable: { type: Boolean, default: true, index: true },
     stock: { type: Number, default: 0, min: 0 },
     lowStockThreshold: { type: Number, default: 5, min: 0 },
+    lowStockEmailSentAt: { type: Date, default: null }, // Added for Feature 09
     averageRating: { type: Number, default: 0, min: 0, max: 5, index: true },
     reviewCount: { type: Number, default: 0, min: 0 },
   },

@@ -4,7 +4,6 @@ import AuthController from '../controllers/AuthController';
 import UserController from '../controllers/UserController';
 import FavoriteController from '../controllers/FavoriteController';
 import StripeController from '../controllers/StripeController';
-import InventoryItemController from '../controllers/InventoryItemController';
 import OrderController from '../controllers/OrderController';
 import ProductController from '../controllers/ProductController';
 import ReviewController from '../controllers/ReviewController';
@@ -16,6 +15,7 @@ import MailController from '../controllers/MailController';
 import CartController from '../controllers/CartController';
 import CheckoutController from '../controllers/CheckoutController';
 import WebhookController from '../controllers/WebhookController';
+import InventoryController from '../controllers/InventoryController'; // New import for inventory management
 import SavedCardController from '../controllers/SavedCardController';
 
 const apiController = express.Router();
@@ -27,7 +27,6 @@ apiController.use('/order', OrderController);
 apiController.use('/review', ReviewController);
 apiController.use('/shop', ShopController);
 apiController.use('/shopGroup', ShopGroupController);
-apiController.use('/inventoryItem', InventoryItemController);
 apiController.use('/subscription', SubscriptionController);
 apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
@@ -36,6 +35,7 @@ apiController.use('/payment', StripeController);
 apiController.use('/cart', CartController);
 apiController.use('/checkout', CheckoutController);
 apiController.use('/recipes', RecipeController);
+apiController.use('/inventory', InventoryController); // New route for inventory management endpoints
 apiController.use('/webhooks', WebhookController);
 apiController.use('/payment-methods', SavedCardController);
 // Used for testing emails

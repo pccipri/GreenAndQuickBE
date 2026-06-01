@@ -11,6 +11,7 @@ export default interface IProduct {
   isAvailable: boolean;
   stock: number;
   lowStockThreshold: number;
+  lowStockEmailSentAt: Date | null; // Added for Feature 09
   averageRating: number;
   reviewCount: number;
   createdAt: Date;

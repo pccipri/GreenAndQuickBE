@@ -1,26 +1,21 @@
 import { Cart } from '@/schemas/CartSchema';
 import { Order } from '@/schemas/OrderSchema';
-import { Product } from '@/schemas/ProductSchema';
 import { Shop } from '@/schemas/ShopSchema';
 import { ShopGroup } from '@/schemas/ShopGroupSchema';
 import { HttpError } from '@/middlewares/errorHandler';
 import { Types } from 'mongoose';
+import mongoose from 'mongoose';
 import { IBaseAddress } from '@/models/IBaseAddress';
-import { stripe } from '..';
+import { stripe } from '@/libs/stripe';
 import { stripeService } from './StripeService';
-
-interface OrderBucket {
-  shopGroupId: Types.ObjectId | null;
-  pickupAddress: IBaseAddress;
-  items: any[];
-  totalAmount: number;
-}
+import { inventoryService } from './InventoryService';
+import { IOrderBucket } from '../models/ICheckout';
 
 export const checkoutService = {
   /**
    * Splits the user's cart into order buckets based on pickup addresses (shops or shop groups).
    */
-  async resolvePickupPoints(userId: string): Promise<OrderBucket[]> {
+  async resolvePickupPoints(userId: string): Promise<IOrderBucket[]> {
     const cart = await Cart.findOne({ userId: new Types.ObjectId(userId) }).populate(
       'items.productId',
     );
@@ -29,18 +24,13 @@ export const checkoutService = {
       throw new HttpError(400, 'checkout.cartEmpty');
     }
 
-    const buckets: Map<string, OrderBucket> = new Map();
-    const unavailableItems: string[] = [];
+    await inventoryService.checkStockAvailability(cart.items);
+
+    const buckets: Map<string, IOrderBucket> = new Map();
 
     for (const item of cart.items) {
-      const product = item.productId as any;
-
-      if (!product || !product.isAvailable || product.stock < item.quantity) {
-        unavailableItems.push(product?.name || 'Unknown Product');
-        continue;
-      }
-
       const shop = await Shop.findById(item.shopId);
+      const product = item.productId as any;
       if (!shop) throw new HttpError(404, 'checkout.shopNotFound');
 
       // Check if shop belongs to an active ShopGroup (Feature 10)
@@ -64,7 +54,7 @@ export const checkoutService = {
       }
 
       const existingBucket = buckets.get(bucketKey);
-      const bucket: OrderBucket = existingBucket || {
+      const bucket: IOrderBucket = existingBucket || {
         shopGroupId,
         pickupAddress,
         items: [],
@@ -82,51 +72,52 @@ export const checkoutService = {
       buckets.set(bucketKey, bucket);
     }
 
-    if (unavailableItems.length > 0) {
-      throw new HttpError(400, `checkout.itemsUnavailable:${unavailableItems.join(', ')}`);
-    }
-
     return Array.from(buckets.values());
   },
 
   async checkoutCash(userId: string, deliveryAddress: any) {
     const buckets = await this.resolvePickupPoints(userId);
     const createdOrders = [];
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    for (const bucket of buckets) {
-      const order = await Order.create({
-        customerId: new Types.ObjectId(userId),
-        shopGroupId: bucket.shopGroupId,
-        items: bucket.items,
-        totalAmount: bucket.totalAmount,
-        paymentMethod: 'cash',
-        paymentStatus: 'pending',
-        status: 'placed',
-        deliveryAddress,
-        pickupAddress: bucket.pickupAddress,
-        statusHistory: [
-          {
-            status: 'placed',
-            changedAt: new Date(),
-            changedBy: new Types.ObjectId(userId),
-          },
-        ],
-      });
+    try {
+      for (const bucket of buckets) {
+        const [order] = await Order.create(
+          [
+            {
+              customerId: new Types.ObjectId(userId),
+              shopGroupId: bucket.shopGroupId,
+              items: bucket.items,
+              totalAmount: bucket.totalAmount,
+              paymentMethod: 'cash',
+              paymentStatus: 'pending',
+              status: 'placed',
+              deliveryAddress,
+              pickupAddress: bucket.pickupAddress,
+              statusHistory: [
+                { status: 'placed', changedAt: new Date(), changedBy: new Types.ObjectId(userId) },
+              ],
+            },
+          ],
+          { session },
+        );
 
-      // Atomically reduce stock for all purchased items
-      for (const item of bucket.items) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: { stock: -item.quantity },
-        });
+        await inventoryService.reduceStock(bucket.items, session);
+        createdOrders.push(order);
       }
 
-      createdOrders.push(order);
+      // Clear user's cart
+      await Cart.deleteOne({ userId: new Types.ObjectId(userId) }).session(session);
+
+      await session.commitTransaction();
+      return createdOrders;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    // Clear user's cart
-    await Cart.deleteOne({ userId: new Types.ObjectId(userId) });
-
-    return createdOrders;
   },
 
   async checkoutCard(
@@ -137,6 +128,12 @@ export const checkoutService = {
     saveCard: boolean = false,
     saveAddress: boolean = false,
   ) {
+    const cart = await Cart.findOne({ userId: new Types.ObjectId(userId) });
+    if (!cart || cart.items.length === 0) {
+      throw new HttpError(400, 'checkout.cartEmpty');
+    }
+    await inventoryService.checkStockAvailability(cart.items); // Pre-check stock for all items
+
     const buckets = await this.resolvePickupPoints(userId);
     const stripeCustomerId = await stripeService.getOrCreateStripeCustomer(
       userId,

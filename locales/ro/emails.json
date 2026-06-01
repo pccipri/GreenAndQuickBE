@@ -16,5 +16,9 @@
   "orderCancelledSubject": "Comanda ta Green Quick #{{orderId}} a fost anulată",
   "orderCancelledBody": "Salut {{userName}},<br/><br/>Comanda ta #{{orderId}} a fost anulată. <br/><br/><b>Motiv:</b> {{cancellationReason}}<br/><br/>{{refundStatusHtml}}<br/><br/>Dacă ai întrebări, te rugăm să contactezi suportul.<br/><br/>Îți mulțumim că ai ales Green Quick!",
   "orderCancelledRefundedStatus": "Suma de {{totalAmount}} a fost rambursată pe metoda ta de plată originală. Rambursarea ar trebui să apară în contul tău în 5-10 zile lucrătoare.",
-  "orderCancelledRefundPendingStatus": "O rambursare pentru suma de {{totalAmount}} a fost inițiată și este în curs de procesare. Te vom notifica odată ce rambursarea este completă."
+  "orderCancelledRefundPendingStatus": "O rambursare pentru suma de {{totalAmount}} a fost inițiată și este în curs de procesare. Te vom notifica odată ce rambursarea este completă.",
+  "lowStockSubject": "Alertă stoc scăzut: {{productName}}",
+  "lowStockBody": "Bună {{userName}},<br/><br/>Stocul pentru produsul tău <b>{{productName}}</b> a atins limita minimă.<br/>Stoc curent: <b>{{stock}}</b><br/>Limită: <b>{{threshold}}</b><br/><br/>Te rugăm să reaprovizionezi cât mai curând pentru a-l păstra disponibil pentru clienți:<br/><a href=\"{{link}}\">Mergi la Gestiune Inventar</a>",
+  "outOfStockSubject": "Alertă stoc epuizat: {{productName}}",
+  "outOfStockBody": "Bună {{userName}},<br/><br/>Produsul tău <b>{{productName}}</b> este acum <b>stoc epuizat</b>.<br/>Acesta a fost marcat automat ca indisponibil în magazin până la reaprovizionare.<br/><br/>Te rugăm să actualizezi stocul în panoul de control pentru a-l face vizibil din nou:<br/><a href=\"{{link}}\">Mergi la Gestiune Inventar</a>"
 }

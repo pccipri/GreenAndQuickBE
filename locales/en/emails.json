@@ -16,5 +16,9 @@
   "orderCancelledSubject": "Your Green Quick Order #{{orderId}} has been Cancelled",
   "orderCancelledBody": "Hello {{userName}},<br/><br/>Your order #{{orderId}} has been cancelled. <br/><br/><b>Reason:</b> {{cancellationReason}}<br/><br/>{{refundStatusHtml}}<br/><br/>If you have any questions, please contact support.<br/><br/>Thank you for shopping with Green Quick!",
   "orderCancelledRefundedStatus": "The amount of {{totalAmount}} has been refunded to your original payment method. The refund should appear in your account within 5-10 business days.",
-  "orderCancelledRefundPendingStatus": "A refund for the amount of {{totalAmount}} has been initiated and is currently processing. We will notify you once the refund is complete."
+  "orderCancelledRefundPendingStatus": "A refund for the amount of {{totalAmount}} has been initiated and is currently processing. We will notify you once the refund is complete.",
+  "lowStockSubject": "Low Stock Alert: {{productName}}",
+  "lowStockBody": "Hello {{userName}},<br/><br/>The stock for your product <b>{{productName}}</b> has reached the threshold.<br/>Current stock: <b>{{stock}}</b><br/>Threshold: <b>{{threshold}}</b><br/><br/>Please restock soon to keep it available for customers:<br/><a href=\"{{link}}\">Go to Inventory Dashboard</a>",
+  "outOfStockSubject": "Out of Stock Alert: {{productName}}",
+  "outOfStockBody": "Hello {{userName}},<br/><br/>Your product <b>{{productName}}</b> is now <b>out of stock</b>.<br/>It has been automatically marked as unavailable in your shop until you restock.<br/><br/>Please restock and update the inventory in your dashboard to make it visible again:<br/><a href=\"{{link}}\">Go to Inventory Dashboard</a>"
 }
