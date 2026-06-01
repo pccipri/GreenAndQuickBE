@@ -1,97 +1,92 @@
-import { Request, Response, Router } from 'express';
+import { Router, Request, Response } from 'express';
+import * as FavoriteService from '@/services/FavoriteService';
+import { requireAuth, requireActiveUser } from '@/middlewares/isAuthenticated';
+import { asyncHandler } from '@/middlewares/asyncHandler';
+import { validate } from '@/middlewares/validate';
 import {
-  createFavorite,
-  deleteFavorite,
-  getAllFavorites,
-  getFavoriteById,
-  getFavoritesByUser,
-  toggleProductInFavorite,
-  updateFavorite,
-} from '../services/FavoriteService';
-import { IdParams } from '@/models/generic/Routes';
+  addFavoriteSchema,
+  getFavoritesQuerySchema,
+  checkFavoriteQuerySchema,
+  deleteFavoriteSchema,
+} from '@/validations/favoriteValidation';
 
 const router = Router();
 
-// Create a Favorite
-router.post('/', async (req: Request, res: Response) => {
-  try {
-    const response = await createFavorite(req.body);
-    res.status(201).json(response);
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.createFailed' });
-  }
-});
+// All favorites routes require authentication and an active user
+router.use(requireAuth, requireActiveUser);
 
-// Get all Favorites
-router.get('/', async (_req: Request, res: Response) => {
-  try {
-    const favourites = await getAllFavorites();
-    res.json(favourites);
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.fetchAllFailed' });
-  }
-});
+/**
+ * POST /favorites
+ * Add a new favorite
+ */
+router.post(
+  '/',
+  validate(addFavoriteSchema),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { targetType, targetId } = req.body;
+    const userId = req.user!._id;
 
-// Get Favorite by ID
-router.get('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const favourite = await getFavoriteById(req.params.id);
-    if (!favourite) res.status(404).json({ error: 'favorite.notFound' });
-    res.json(favourite);
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.fetchFailed' });
-  }
-});
+    const favorite = await FavoriteService.addFavorite(userId, targetType, targetId);
+    res.status(201).json(favorite);
+  }),
+);
 
-// Get Favorites by user
-router.get('/user/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const { id: userId } = req.params;
-    const favourites = await getFavoritesByUser(userId);
-    res.json(favourites);
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.fetchByUserFailed' });
-  }
-});
+/**
+ * GET /favorites
+ * List user's favorites by type with pagination
+ */
+router.get(
+  '/',
+  validate(getFavoritesQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { targetType, page, limit } = req.query as any;
+    const userId = req.user!._id;
 
-// Update a Favorite
-router.put('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const updated = await updateFavorite(req.params.id, req.body);
-    if (!updated) res.status(404).json({ error: 'favorite.notFound' });
-    res.json(updated);
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.updateFailed' });
-  }
-});
+    const favorites = await FavoriteService.listFavorites(
+      userId,
+      targetType,
+      Number(page),
+      Number(limit),
+    );
+    res.json(favorites);
+  }),
+);
 
-// Delete a Favorite
-router.delete('/:id', async (req: Request<IdParams>, res: Response) => {
-  try {
-    const deleted = await deleteFavorite(req.params.id);
-    if (!deleted) res.status(404).json({ error: 'favorite.notFound' });
-    res.json({ message: 'Favourite deleted successfully' });
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.deleteFailed' });
-  }
-});
+/**
+ * GET /favorites/check
+ * Check if a specific item is favorited by the current user
+ */
+router.get(
+  '/check',
+  validate(checkFavoriteQuerySchema, 'query'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { targetType, targetId } = req.query as any;
+    const userId = req.user!._id;
 
-// PATCH /favorites/toggleProduct
-router.patch('/toggleProduct', async (req: Request, res: Response) => {
-  try {
-    const { userId, productId } = req.body;
+    const result = await FavoriteService.isFavorited(userId, targetType, targetId);
+    res.json(result);
+  }),
+);
 
-    if (!userId || !productId) {
-      res.status(400).json({ error: 'favorite.missingIds' });
+/**
+ * DELETE /favorites/:targetType/:targetId
+ * Remove a favorite
+ */
+router.delete(
+  '/:targetType/:targetId',
+  validate(deleteFavoriteSchema, 'params'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const { targetType, targetId } = req.params as { targetType: string; targetId: string };
+    const userId = req.user!._id;
+
+    const deleted = await FavoriteService.removeFavorite(userId, targetType, targetId);
+
+    if (!deleted) {
+      return res.status(404).json({ error: 'favorite.notFound' });
     }
 
-    const result = await toggleProductInFavorite(userId, productId);
-    res.json({
-      message: result.added ? 'Product added to favorites' : 'Product removed from favorites',
-    });
-  } catch (error: any) {
-    res.status(500).json({ error: 'favorite.toggleFailed' });
-  }
-});
+    res.status(204).send();
+  }),
+);
 
 export default router;

@@ -1,63 +1,94 @@
-import { Types } from 'mongoose';
-import { IFavorite } from '../models/IFavorite';
+import mongoose from 'mongoose';
 import { Favorite } from '../schemas/FavoriteSchema';
+import { HttpError } from '@/middlewares/errorHandler';
+import { toFavoriteDto } from '../presenters/FavoritePresenter';
 
-export const createFavorite = async (FavoriteToSave: IFavorite) => {
-  const newFavourite = new Favorite(FavoriteToSave);
-  const response = await newFavourite.save();
-  return !!response;
+const FAVORITE_TARGET_MODELS: Record<'recipe' | 'product' | 'shop', string> = {
+  recipe: 'recipe',
+  product: 'product',
+  shop: 'shop',
 };
 
-export const getAllFavorites = async () => {
-  const favourites = await Favorite.find();
-  return favourites.map((f) => f.toJSON());
+const getTargetModel = (targetType: 'recipe' | 'product' | 'shop') => {
+  const modelName = FAVORITE_TARGET_MODELS[targetType];
+  return mongoose.model(modelName);
 };
 
-export const getFavoriteById = async (id: string) => {
-  const favourite = await Favorite.findById(id);
-  return favourite || false;
-};
+/**
+ * Adds a new favorite for a user.
+ */
+export const addFavorite = async (
+  userId: string,
+  targetType: 'recipe' | 'product' | 'shop',
+  targetId: string,
+) => {
+  // Verify target exists in its respective collection
+  const TargetModel = getTargetModel(targetType);
+  const targetExists = await TargetModel.exists({ _id: targetId });
 
-export const getFavoritesByUser = async (userId: string) => {
-  const favourites = await Favorite.find({ user: userId });
-  return favourites || [];
-};
-
-export const updateFavorite = async (id: string, modifiedFavorite: IFavorite) => {
-  const updatedFavourite = await Favorite.findByIdAndUpdate(id, modifiedFavorite, { new: true });
-  return !!updatedFavourite;
-};
-
-export const deleteFavorite = async (id: string) => {
-  const deletedFavourite = await Favorite.findByIdAndDelete(id);
-  return !!deletedFavourite;
-};
-
-export const toggleProductInFavorite = async (userId: string, productId: string) => {
-  const favorite = await Favorite.findOne({ user: userId });
-
-  if (!favorite) {
-    // Create a new favorite if it doesn't exist
-    const newFavourite = new Favorite({
-      user: userId,
-      products: [productId],
-    });
-    await newFavourite.save();
-    return { added: true };
+  if (!targetExists) {
+    throw new HttpError(404, `${targetType}.notFound`);
   }
 
-  const productObjectId = new Types.ObjectId(productId);
-  const alreadyExists = favorite.products.some((p) => p.equals(productObjectId));
-
-  if (alreadyExists) {
-    // Remove the product
-    favorite.products = favorite.products.filter((p) => !p.equals(productObjectId));
-    await favorite.save();
-    return { added: false };
-  } else {
-    // Add the product
-    favorite.products.push(productObjectId);
-    await favorite.save();
-    return { added: true };
+  try {
+    const favorite = new Favorite({ userId, targetType, targetId });
+    const savedFavorite = await favorite.save();
+    return toFavoriteDto(savedFavorite);
+  } catch (error: any) {
+    if (error.code === 11000) {
+      throw new HttpError(409, 'favorite.alreadyExists');
+    }
+    throw error;
   }
+};
+
+/**
+ * Removes a favorite.
+ */
+export const removeFavorite = async (userId: string, targetType: string, targetId: string) => {
+  const result = await Favorite.deleteOne({ userId, targetType, targetId });
+  return result.deletedCount > 0;
+};
+
+/**
+ * Lists favorites for a user by type with pagination.
+ */
+export const listFavorites = async (
+  userId: string,
+  targetType: 'recipe' | 'product' | 'shop' | undefined,
+  page: number = 1,
+  limit: number = 10,
+) => {
+  const skip = (page - 1) * limit;
+  const query: any = { userId };
+
+  if (targetType) {
+    query.targetType = targetType;
+  }
+
+  const [items, total] = await Promise.all([
+    Favorite.find(query)
+      .lean()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('targetId'),
+    Favorite.countDocuments(query),
+  ]);
+
+  return {
+    items: items.map((item) => toFavoriteDto(item)),
+    total,
+    page,
+    limit,
+    hasNext: skip + items.length < total,
+  };
+};
+
+/**
+ * Checks if a specific item is favorited by a user.
+ */
+export const isFavorited = async (userId: string, targetType: string, targetId: string) => {
+  const favoriteExists = await Favorite.exists({ userId, targetType, targetId });
+  return { isFavorited: !!favoriteExists };
 };

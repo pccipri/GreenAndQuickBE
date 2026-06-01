@@ -31,7 +31,7 @@ apiController.use('/inventoryItem', InventoryItemController);
 apiController.use('/subscription', SubscriptionController);
 apiController.use('/user', UserController);
 apiController.use('/auth', AuthController);
-apiController.use('/favorite', FavoriteController);
+apiController.use('/favorites', FavoriteController);
 apiController.use('/payment', StripeController);
 apiController.use('/cart', CartController);
 apiController.use('/checkout', CheckoutController);

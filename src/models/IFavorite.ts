@@ -1,7 +1,8 @@
 export interface IFavorite {
   _id: string;
-  user: string;
-  products: string[];
+  userId: string;
+  targetType: 'recipe' | 'product' | 'shop';
+  targetId: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt?: Date;
 }
