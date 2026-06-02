@@ -2,7 +2,14 @@ import { Response, Request, Router } from 'express';
 import { shopGroupService } from '../services/ShopGroupService';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { requireAuth, requireRole } from '@/middlewares/isAuthenticated';
-import { IdParams, SlugParams } from '@/models/generic/Routes';
+import { IdParams, SlugParams, IdParamsWithOptionalId } from '@/models/generic/Routes';
+import {
+  createGroupSchema,
+  updateGroupSchema,
+  inviteShopSchema,
+  respondInviteSchema,
+} from '@/validations/shopGroupValidation';
+import { validate } from '@/middlewares/validate'; // Assuming a validate middleware exists
 
 const router = Router();
 
@@ -14,6 +21,7 @@ router.post(
   '/',
   requireAuth,
   requireRole(['shopOwner']),
+  validate(createGroupSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const group = await shopGroupService.create(req.user!._id, req.body);
     res.status(201).json(group);
@@ -26,18 +34,38 @@ router.post(
  */
 router.get(
   '/',
-  asyncHandler(async (_req, res) => {
-    const groups = await shopGroupService.list();
-    res.json(groups);
+  asyncHandler(async (req, res) => {
+    const { search, page, limit } = req.query;
+    const result = await shopGroupService.list(
+      search as string,
+      page ? parseInt(page as string, 10) : 1,
+      limit ? parseInt(limit as string, 10) : 10,
+    );
+    res.json(result);
   }),
 );
 
 /**
- * GET /shopGroup/slug/:slug
+ * GET /shop-groups/me/invitations
+ * List pending invitations received by the current shop owner
+ * Defined before /:slug to prevent collision
+ */
+router.get(
+  '/me/invitations',
+  requireAuth,
+  requireRole(['shopOwner']),
+  asyncHandler(async (req: Request, res: Response) => {
+    const invitations = await shopGroupService.getInvitationsForShop(req.user!._id);
+    res.json(invitations);
+  }),
+);
+
+/**
+ * GET /shop-groups/:slug
  * Get shop group details by slug (Public)
  */
 router.get(
-  '/slug/:slug',
+  '/:slug',
   asyncHandler(async (req: Request<SlugParams>, res: Response) => {
     const group = await shopGroupService.getBySlug(req.params.slug);
     res.json(group);
@@ -45,24 +73,13 @@ router.get(
 );
 
 /**
- * GET /shopGroup/:id
- * Get shop group details by ID (Public)
- */
-router.get(
-  '/:id',
-  asyncHandler(async (req: Request<IdParams>, res: Response) => {
-    const group = await shopGroupService.getById(req.params.id);
-    res.json(group);
-  }),
-);
-
-/**
- * PUT /shopGroup/:id
+ * PATCH /shop-groups/:id
  * Update shop group details (Owner or Admin)
  */
-router.put(
+router.patch(
   '/:id',
   requireAuth,
+  validate(updateGroupSchema),
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const isAdmin = req.user?.role === 'admin';
     const updated = await shopGroupService.update(req.params.id, req.body, req.user!._id, isAdmin);
@@ -71,17 +88,91 @@ router.put(
 );
 
 /**
- * DELETE /shopGroup/:id
- * Delete shop group (Admin or Owner)
+ * DELETE /shop-groups/:id
+ * Deactivate shop group (Admin or Owner) - Soft delete
  */
 router.delete(
   '/:id',
   requireAuth,
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const isAdmin = req.user?.role === 'admin';
-    await shopGroupService.remove(req.params.id, req.user!._id, isAdmin);
-    res.json({ message: 'Shop group deleted successfully' });
+    await shopGroupService.deactivateGroup(req.params.id, req.user!._id, isAdmin);
+    res.json({ message: 'Shop group deactivated successfully' });
   }),
+);
+
+/**
+ * DELETE /shop-groups/:id/shops/:shopId
+ * Remove a shop from group or leave group (Group owner or the shop owner leaving)
+ */
+router.delete(
+  '/:id/shops/:shopId',
+  requireAuth,
+  requireRole(['shopOwner']),
+  asyncHandler(async (req: Request<IdParams & { shopId: string }>, res: Response) => {
+    await shopGroupService.leaveGroup(req.params.id, req.params.shopId, req.user!._id);
+    res.json({ message: 'Shop successfully removed from group' });
+  }),
+);
+
+/**
+ * POST /shop-groups/:id/invitations
+ * Send invitation to a shop (Group owner only)
+ */
+router.post(
+  '/:id/invitations',
+  requireAuth,
+  requireRole(['shopOwner']),
+  validate(inviteShopSchema),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const { shopId } = req.body;
+    const invitation = await shopGroupService.sendInvitation(req.params.id, shopId, req.user!._id);
+    res.status(201).json(invitation);
+  }),
+);
+
+/**
+ * GET /shop-groups/:id/invitations
+ * List invitations for a group (Group owner only)
+ */
+router.get(
+  '/:id/invitations',
+  requireAuth,
+  requireRole(['shopOwner']),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const { status } = req.query;
+    const invitations = await shopGroupService.getInvitationsForGroup(
+      req.params.id,
+      req.user!._id,
+      status as string,
+    );
+    res.json(invitations);
+  }),
+);
+
+/**
+ * PATCH /shop-groups/:groupId/invitations/:invitationId
+ * Respond to invitation (Invited shop owner only)
+ */
+router.patch(
+  '/:groupId/invitations/:invitationId',
+  requireAuth,
+  requireRole(['shopOwner']),
+  validate(respondInviteSchema),
+  asyncHandler(
+    async (
+      req: Request<IdParamsWithOptionalId & { groupId: string; invitationId: string }>,
+      res: Response,
+    ) => {
+      const { status } = req.body;
+      const invitation = await shopGroupService.respondToInvitation(
+        req.params.invitationId,
+        req.user!._id,
+        status,
+      );
+      res.json(invitation);
+    },
+  ),
 );
 
 export default router;

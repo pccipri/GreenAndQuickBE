@@ -27,4 +27,9 @@ const shopGroupSchema = new Schema<ShopGroupDocument>(
   { timestamps: true },
 );
 
+shopGroupSchema.index({ slug: 1 });
+shopGroupSchema.index({ shops: 1, isActive: 1 });
+shopGroupSchema.index({ isActive: 1 });
+shopGroupSchema.index({ name: 'text', description: 'text' });
+
 export const ShopGroup = mongoose.model<ShopGroupDocument>('ShopGroup', shopGroupSchema);
