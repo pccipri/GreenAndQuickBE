@@ -1,25 +1,30 @@
-import { jsonString } from '@/utils/helpers';
 import { z } from 'zod';
 
-const shopLocationSchema = z.object({
-  street: z.string().min(1, 'shop.location.streetRequired'),
-  city: z.string().min(1, 'shop.location.cityRequired'),
-  county: z.string().min(1, 'shop.location.countyRequired'),
-  country: z.string().min(1, 'shop.location.countryRequired'),
-  zipcode: z.string().min(1, 'shop.location.zipcodeRequired'),
-  coordinates: z
-    .object({
-      lat: z.number(),
-      lng: z.number(),
-    })
-    .nullable()
-    .optional(),
-});
-
+/**
+ * Validation schema for Shop creation including CUI.
+ * CUI is a string of 2-10 digits.
+ */
 export const createShopSchema = z.object({
-  name: z.string().min(3, 'shop.nameTooShort').max(100, 'shop.nameTooLong'),
-  description: z.string().min(10, 'shop.descriptionTooShort').max(1000, 'shop.descriptionTooLong'),
-  location: jsonString(shopLocationSchema).nullable().optional(),
+  body: z.object({
+    name: z.string().min(2).max(100),
+    description: z.string().min(10).max(1000),
+    cui: z.string().regex(/^[0-9]{2,10}$/, 'Invalid CUI format'),
+    location: z
+      .object({
+        street: z.string(),
+        city: z.string(),
+        county: z.string(),
+        country: z.string(),
+        zipcode: z.string(),
+        coordinates: z
+          .object({
+            lat: z.number(),
+            lng: z.number(),
+          })
+          .nullable(),
+      })
+      .nullable(),
+  }),
 });
 
 export const updateShopSchema = createShopSchema.partial();

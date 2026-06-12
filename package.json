@@ -8,6 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "seedAdmin": "tsx seeds/seedAdmin.ts",
     "seedCategories": "tsx seeds/seedCategories.ts",
+    "seedDietaryTags": "tsx seeds/seedDietaryTags.ts",
     "migrate:reviews:verify": "tsx src/seeds/runReviewMigrationAndVerify.ts",
     "stripeWebhook": "stripe listen --forward-to localhost:8080/api/webhooks/stripe",
     "lint": "eslint .",

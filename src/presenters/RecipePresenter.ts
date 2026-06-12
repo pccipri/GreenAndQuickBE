@@ -31,5 +31,27 @@ export function toRecipeDto(doc: any): IRecipeDTO {
       })
     : [];
 
+  // Transform ingredients: if ingredient.linkedProductId is populated, expose linkedProduct
+  recipe.ingredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients.map((ing: any) => {
+        const { linkedProductId, ...rest } = ing;
+        const linkedProduct =
+          linkedProductId && typeof linkedProductId === 'object'
+            ? {
+                id: (linkedProductId._id || linkedProductId.id)?.toString(),
+                name: linkedProductId.name,
+                price: linkedProductId.price ?? null,
+                shopId: linkedProductId.shopId ? String(linkedProductId.shopId) : null,
+              }
+            : null;
+
+        return {
+          ...rest,
+          linkedProduct,
+          linkedProductId: linkedProduct ? linkedProduct.id : (linkedProductId ?? null),
+        };
+      })
+    : [];
+
   return recipe as IRecipeDTO;
 }

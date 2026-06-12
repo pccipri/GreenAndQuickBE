@@ -14,6 +14,11 @@ const ingredientSchema = z.object({
   label: z.string().min(1).max(100),
   value: z.number().positive(),
   unit: z.enum(INGREDIENT_UNITS),
+  linkedProductId: z
+    .string()
+    .refine((val) => (val == null ? true : Types.ObjectId.isValid(val)), 'recipe.invalidProductId')
+    .nullable()
+    .optional(),
 });
 
 const nutritionValueSchema = z.object({
@@ -45,6 +50,7 @@ export const createRecipeSchema = z.object({
   instructions: jsonString(z.array(instructionSchema).min(1)),
   mealType: z.enum(MEAL_TYPES),
   difficulty: z.enum(DIFFICULTIES).nullable().optional(),
+  dietaryTags: jsonString(z.array(z.string()).nullable().optional()),
   tags: jsonString(z.array(z.string()).nullable().optional()),
   servings: z.coerce.number().int().min(1),
   duration: z.coerce.number().int().min(1),

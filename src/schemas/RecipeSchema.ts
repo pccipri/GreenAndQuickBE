@@ -12,9 +12,10 @@ import mongoose, { InferSchemaType, Model, Schema, Types } from 'mongoose';
 
 const ingredientSchema = new Schema(
   {
-    label: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true },
     value: { type: Number, required: true },
     unit: { type: String, required: true, enum: INGREDIENT_UNITS },
+    linkedProductId: { type: Types.ObjectId, ref: 'product', required: false, index: true },
   },
   { _id: false },
 );
@@ -74,7 +75,7 @@ const recipeSchema = new Schema(
     },
     mealType: { type: String, required: true, enum: MEAL_TYPES, index: true },
     difficulty: { type: String, enum: DIFFICULTIES },
-    tags: { type: [String], default: [], index: true },
+    dietaryTags: { type: [String], default: [], index: true },
     servings: { type: Number, required: true, min: 1 },
     nutritionPerPortion: { type: nutritionPerPortionSchema, required: false },
     duration: { type: Number, required: true, min: 1 },
@@ -90,10 +91,12 @@ const recipeSchema = new Schema(
 );
 
 recipeSchema.index({ isPublished: 1, mealType: 1 });
-
+// Index for reverse lookup: find recipes that reference a specific product
+recipeSchema.index({ 'ingredients.linkedProductId': 1 });
+// Index for text search on recipe title, description, and ingredient names
 recipeSchema.index(
-  { title: 'text', shortDescription: 'text', tags: 'text', 'ingredients.label': 'text' },
-  { weights: { title: 10, tags: 5, shortDescription: 1, 'ingredients.label': 2 } },
+  { title: 'text', shortDescription: 'text', 'ingredients.label': 'text' },
+  { weights: { title: 10, shortDescription: 1, 'ingredients.label': 2 } },
 );
 
 recipeSchema.pre(['updateOne', 'findOneAndUpdate', 'updateMany'], function () {

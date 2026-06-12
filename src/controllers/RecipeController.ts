@@ -82,6 +82,11 @@ router.post(
   validate(createRecipeSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const payload = req.body;
+    if (!payload.dietaryTags && payload.tags) {
+      payload.dietaryTags = payload.tags;
+      delete payload.tags;
+    }
+
     const recipeId = new Types.ObjectId(); // Generate ObjectId upfront
     const files = getUploadFiles(req);
 
@@ -178,6 +183,11 @@ router.patch(
     }
 
     const payload = req.body;
+    if (!payload.dietaryTags && payload.tags) {
+      payload.dietaryTags = payload.tags;
+      delete payload.tags;
+    }
+
     const files = getUploadFiles(req);
 
     const mainImageFile = files.mainImage?.[0] ?? null;

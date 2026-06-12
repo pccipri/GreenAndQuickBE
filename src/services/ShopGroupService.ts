@@ -1,11 +1,16 @@
 import { Types } from 'mongoose';
 import { IShopGroup } from '@/models/IShopGroup';
+import { IShopGroupInvitation } from '@/models/IShopGroupInvitation';
 import { ShopGroup } from '@/schemas/ShopGroupSchema';
 import { ShopGroupInvitation } from '@/schemas/ShopGroupInvitationSchema';
 import { Shop } from '@/schemas/ShopSchema'; // Assuming ShopSchema exists
 import { HttpError } from '@/middlewares/errorHandler';
 import mongoose from 'mongoose';
 import { normalizeNameAndSlug } from '@/middlewares/normalizeNameAndSlug';
+import {
+  toShopGroupInvitationDto,
+  toShopGroupInvitationDtos,
+} from '@/presenters/ShopGroupInvitationPresenter';
 
 export const shopGroupService = {
   /**
@@ -205,7 +210,11 @@ export const shopGroupService = {
    * Send an invitation to a shop to join a group.
    * Only the group owner can send invitations.
    */
-  async sendInvitation(groupId: string, targetShopId: string, invitedByUserId: string) {
+  async sendInvitation(
+    groupId: string,
+    targetShopId: string,
+    invitedByUserId: string,
+  ): Promise<IShopGroupInvitation> {
     if (!Types.ObjectId.isValid(groupId)) throw new HttpError(400, 'shopGroup.invalidGroupId');
     if (!Types.ObjectId.isValid(targetShopId))
       throw new HttpError(400, 'shopGroup.invalidTargetShopId');
@@ -248,7 +257,7 @@ export const shopGroupService = {
       status: 'pending',
     });
 
-    return invitation.toJSON();
+    return toShopGroupInvitationDto(invitation.toJSON());
   },
 
   /**
@@ -259,7 +268,7 @@ export const shopGroupService = {
     invitationId: string,
     shopOwnerUserId: string,
     status: 'accepted' | 'declined',
-  ) {
+  ): Promise<IShopGroupInvitation> {
     if (!Types.ObjectId.isValid(invitationId))
       throw new HttpError(400, 'shopGroup.invalidInvitationId');
 
@@ -301,7 +310,7 @@ export const shopGroupService = {
       }
 
       await session.commitTransaction();
-      return invitation.toJSON();
+      return toShopGroupInvitationDto(invitation.toJSON());
     } catch (error) {
       await session.abortTransaction();
       throw error;
@@ -313,7 +322,7 @@ export const shopGroupService = {
   /**
    * Get all pending invitations for a specific shop owner.
    */
-  async getInvitationsForShop(shopOwnerUserId: string) {
+  async getInvitationsForShop(shopOwnerUserId: string): Promise<IShopGroupInvitation[]> {
     const shop = await Shop.findOne({ ownerId: new Types.ObjectId(shopOwnerUserId) });
     if (!shop) throw new HttpError(404, 'shopGroup.shopNotFoundForUser');
 
@@ -325,14 +334,18 @@ export const shopGroupService = {
       .populate('invitedByShopId', 'name')
       .lean();
 
-    return invitations;
+    return toShopGroupInvitationDtos(invitations);
   },
 
   /**
    * Get all invitations (pending, accepted, declined) for a specific group.
    * Only the group owner can view these.
    */
-  async getInvitationsForGroup(groupId: string, requesterUserId: string, status?: string) {
+  async getInvitationsForGroup(
+    groupId: string,
+    requesterUserId: string,
+    status?: string,
+  ): Promise<IShopGroupInvitation[]> {
     if (!Types.ObjectId.isValid(groupId)) throw new HttpError(400, 'shopGroup.invalidGroupId');
 
     const group = await ShopGroup.findById(groupId);
@@ -353,6 +366,6 @@ export const shopGroupService = {
       .populate('invitedByShopId', 'name logo')
       .lean();
 
-    return invitations;
+    return toShopGroupInvitationDtos(invitations);
   },
 };

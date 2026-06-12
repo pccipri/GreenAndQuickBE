@@ -1,6 +1,7 @@
 import { HttpError } from '@/middlewares/errorHandler';
 import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { Recipe } from '@/schemas/RecipeSchema';
+import { Product } from '@/schemas/ProductSchema';
 import { productService } from '@/services/ProductService';
 import { SortOrder, Types } from 'mongoose';
 
@@ -8,8 +9,10 @@ type ListQuery = {
   q?: string;
   mealType?: string;
   difficulty?: string;
-  tag?: string; // single tag filter
-  tags?: string[]; // multiple tags (any match)
+  dietaryTag?: string; // single dietary tag filter
+  dietaryTags?: string[]; // multiple dietary tags (any match)
+  tag?: string; // backward compatibility single tag filter
+  tags?: string[]; // backward compatibility multiple tags (any match)
   authorId?: string;
   isPublished?: string; // "true" | "false"
   minRating?: string;
@@ -20,10 +23,29 @@ type ListQuery = {
 
 export const recipeService = {
   async create(authorId: string, payload: any) {
-    const doc = await Recipe.create({
+    // validate linked product ids if present
+    if (Array.isArray(payload.ingredients)) {
+      const ids = payload.ingredients
+        .map((i: any) => i.linkedProductId)
+        .filter(Boolean)
+        .map(String);
+
+      for (const id of ids) {
+        if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
+        const exists = await Product.exists({ _id: id });
+        if (!exists) throw new HttpError(404, 'product.notFound');
+      }
+    }
+
+    const created = await Recipe.create({
       ...payload,
       authorId: new Types.ObjectId(authorId),
     });
+
+    const doc = await Recipe.findById(created._id)
+      .populate('authorId', 'firstName lastName avatarPath')
+      .populate('ingredients.linkedProductId', 'name price shopId')
+      .lean();
 
     return toRecipeDto(doc);
   },
@@ -33,6 +55,7 @@ export const recipeService = {
 
     const recipe = await Recipe.findById(id)
       .populate('authorId', 'firstName lastName avatarPath')
+      .populate('ingredients.linkedProductId', 'name price shopId')
       .lean();
     if (!recipe) throw new HttpError(404, 'Recipe not found');
 
@@ -45,6 +68,7 @@ export const recipeService = {
   async getBySlug(requesterId: string | null, slug: string) {
     const recipe = await Recipe.findOne({ slug })
       .populate('authorId', 'firstName lastName avatarPath')
+      .populate('ingredients.linkedProductId', 'name price shopId')
       .lean();
     if (!recipe) throw new HttpError(404, 'Recipe not found');
 
@@ -63,11 +87,28 @@ export const recipeService = {
       filter.authorId = new Types.ObjectId(requesterId);
     }
 
+    // validate linked product ids if present
+    if (Array.isArray(payload.ingredients)) {
+      const ids = payload.ingredients
+        .map((i: any) => i.linkedProductId)
+        .filter(Boolean)
+        .map(String);
+
+      for (const id of ids) {
+        if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
+        const exists = await Product.exists({ _id: id });
+        if (!exists) throw new HttpError(404, 'product.notFound');
+      }
+    }
+
     const recipe = await Recipe.findOneAndUpdate(
       filter,
       { $set: payload },
       { new: true, runValidators: true },
-    ).lean();
+    )
+      .populate('authorId', 'firstName lastName avatarPath')
+      .populate('ingredients.linkedProductId', 'name price shopId')
+      .lean();
 
     if (!recipe) throw new HttpError(404, 'recipe.notFound');
 
@@ -107,14 +148,39 @@ export const recipeService = {
       filter.authorId = new Types.ObjectId(query.authorId);
     }
 
-    const tags: string[] = [];
-    if (query.tag) tags.push(query.tag);
-    if (Array.isArray(query.tags)) tags.push(...query.tags);
-    if (tags.length > 0) filter.tags = { $in: tags };
+    const dietaryTags: string[] = [];
+    const addQueryTags = (value: string | string[] | undefined) => {
+      if (!value) return;
+      if (Array.isArray(value)) {
+        value.forEach((tag) => {
+          if (tag)
+            dietaryTags.push(
+              ...tag
+                .split(',')
+                .map((item) => item.trim())
+                .filter(Boolean),
+            );
+        });
+      } else if (typeof value === 'string') {
+        dietaryTags.push(
+          ...value
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean),
+        );
+      }
+    };
+
+    addQueryTags(query.dietaryTag);
+    addQueryTags(query.dietaryTags as any);
+    addQueryTags(query.tag);
+    addQueryTags(query.tags as any);
+
+    if (dietaryTags.length > 0) filter.dietaryTags = { $in: dietaryTags };
 
     if (query.minRating != null) {
       const mr = Number(query.minRating);
-      if (!Number.isNaN(mr)) filter.rating = { $gte: mr };
+      if (!Number.isNaN(mr)) filter.averageRating = { $gte: mr };
     }
 
     const mongoQuery = query.q ? { ...filter, $text: { $search: query.q } } : filter;
@@ -122,7 +188,7 @@ export const recipeService = {
 
     const sort: Record<string, SortOrder> =
       query.sort === 'rating'
-        ? { rating: -1, reviewCount: -1 }
+        ? { averageRating: -1, reviewCount: -1 }
         : query.sort === 'duration'
           ? { duration: 1, createdAt: -1 }
           : { createdAt: -1 };

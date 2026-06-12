@@ -9,7 +9,12 @@ export interface MeasuredValue<L extends string, U extends string> {
   unit: U;
 }
 
-export type Ingredient = MeasuredValue<string, IngredientUnit>;
+export interface IRecipeIngredient {
+  name: string;
+  quantity: number;
+  unit: IngredientUnit;
+  linkedProductId: string | null; // optional ref to Product — set by author to link a specific app product
+}
 export type NutritionValue = MeasuredValue<
   'Energy' | 'Fat' | 'Saturates' | 'Carbohydrate' | 'Sugars' | 'Protein' | 'Salt',
   NutrientUnit
@@ -41,11 +46,11 @@ export interface IRecipe {
   authorId: string;
   title: string;
   shortDescription: string;
-  ingredients: Ingredient[];
+  ingredients: IRecipeIngredient[];
   instructions: IRecipeInstruction[];
   mealType: MealType;
   difficulty: Difficulty | null;
-  tags: string[] | null;
+  dietaryTags: string[] | null;
   servings: number;
   nutritionPerPortion: NutritionPerPortion | null;
   duration: number;

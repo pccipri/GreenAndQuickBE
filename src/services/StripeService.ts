@@ -1,6 +1,6 @@
 import { User } from '@/schemas/UserSchema';
 import { HttpError } from '@/middlewares/errorHandler';
-import { stripe } from '..';
+import { stripe } from '@/libs/stripe';
 
 export const stripeService = {
   /**

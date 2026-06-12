@@ -6,6 +6,8 @@ const shopSchema = new Schema(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     description: { type: String, required: true, trim: true },
+    cui: { type: String, required: true, unique: true, uppercase: true, immutable: true },
+    nrRegCom: { type: String, default: null },
     logo: { type: String, default: null },
     coverImage: { type: String, default: null },
     ownerId: {

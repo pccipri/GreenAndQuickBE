@@ -1,8 +1,8 @@
 import { SavedCard } from '@/schemas/SavedCardSchema';
-import { stripe } from '..';
 import { Types } from 'mongoose';
 import { HttpError } from '@/middlewares/errorHandler';
 import { stripeService } from './StripeService';
+import { stripe } from '@/libs/stripe';
 
 export const savedCardService = {
   async list(userId: string) {

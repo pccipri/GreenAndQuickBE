@@ -16,6 +16,7 @@ import {
 import { createProductSchema } from '@/validations/productValidation';
 import { IdParams, SlugParams } from '@/models/generic/Routes';
 import { Shop } from '@/schemas/ShopSchema';
+import { AnafClient } from '@/libs/anafClient';
 
 const router = Router();
 
@@ -65,6 +66,15 @@ router.post(
     const coverFile = files.coverImage?.[0];
 
     try {
+      // Validate CUI via ANAF before proceeding
+      const anafData = await AnafClient.validateCui(payload.cui);
+
+      // Enrich payload with verified business data
+      payload.name = anafData.name;
+      payload.nrRegCom = anafData.nrRegCom;
+      payload.cui = anafData.cui;
+      payload.location = { ...payload.location, ...anafData.location };
+
       if (logoFile) {
         const uploadedLogo = await uploadPublicImage({
           file: logoFile.buffer,

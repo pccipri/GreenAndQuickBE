@@ -1,12 +1,13 @@
 import mongoose, { Document, Schema, Types } from 'mongoose';
+import { IShopGroupInvitation } from '@/models/IShopGroupInvitation';
 
-export interface ShopGroupInvitationDocument extends Document {
+export interface ShopGroupInvitationDocument
+  extends
+    Document,
+    Omit<IShopGroupInvitation, '_id' | 'groupId' | 'invitedShopId' | 'invitedByShopId'> {
   groupId: Types.ObjectId;
   invitedShopId: Types.ObjectId;
   invitedByShopId: Types.ObjectId;
-  status: 'pending' | 'accepted' | 'declined';
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const shopGroupInvitationSchema = new Schema<ShopGroupInvitationDocument>(
