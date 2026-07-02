@@ -1,11 +1,11 @@
-import { IOrder } from '../models/IOrder';
+import type { IOrder } from '../models/IOrder';
 import { Order } from '../schemas/OrderSchema';
 import mongoose, { Types } from 'mongoose';
 import { HttpError } from '@/middlewares/errorHandler';
 import { stripeService } from './StripeService';
 import { User } from '@/schemas/UserSchema';
 import { Shop } from '@/schemas/ShopSchema';
-import { IUser } from '@/models/IUser';
+import type { IUser } from '@/models/IUser';
 import { ALLOWED_TRANSITIONS } from '@/utils/constants';
 import {
   sendOrderCancelledEmail,
@@ -13,14 +13,36 @@ import {
   sendOrderShippedEmail,
   sendOrderDeliveredEmail,
 } from '@/utils/mailer';
-import { IOrderDocument } from '@/schemas/OrderSchema';
+import type { IOrderDocument } from '@/schemas/OrderSchema';
 import { inventoryService } from './InventoryService';
 
 // Create a new order
 export const createOrder = async (orderToSave: IOrder) => {
-  const newOrder = new Order(orderToSave);
-  const response = await newOrder.save();
-  return response;
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Validate and reduce stock first
+    await inventoryService.checkStockAvailability(
+      orderToSave.items.map((item) => ({
+        productId: item.productId.toString(),
+        shopId: item.shopId.toString(),
+        quantity: item.quantity,
+        priceAtAdd: item.priceAtPurchase,
+      })),
+    );
+    await inventoryService.reduceStock(orderToSave.items, session);
+
+    const [newOrder] = await Order.create([orderToSave], { session });
+
+    await session.commitTransaction();
+    return newOrder;
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
 // Get all orders

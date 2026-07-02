@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { plainText } from './common';
 
 export const createCategorySchema = z.object({
-  name: z.string().min(2, 'category.nameTooShort').max(100, 'category.nameTooLong'),
+  name: plainText(2, 100),
 });
 
 export const updateCategorySchema = z.object({
-  name: z.string().min(2, 'category.nameTooShort').max(100, 'category.nameTooLong').optional(), // Name is optional for updates
+  name: plainText(2, 100).optional(),
 });

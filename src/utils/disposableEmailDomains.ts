@@ -1,0 +1,60 @@
+/**
+ * Common disposable/temporary email domains blocked when BLOCK_DISPOSABLE_EMAILS is enabled.
+ */
+export const DISPOSABLE_EMAIL_DOMAINS = new Set([
+  'mailinator.com',
+  'guerrillamail.com',
+  'guerrillamail.net',
+  'guerrillamail.org',
+  'sharklasers.com',
+  'grr.la',
+  'guerrillamailblock.com',
+  'pokemail.net',
+  'spam4.me',
+  'tempmail.com',
+  'temp-mail.org',
+  'temp-mail.io',
+  'throwaway.email',
+  'yopmail.com',
+  'yopmail.fr',
+  'yopmail.net',
+  'getnada.com',
+  'dispostable.com',
+  'maildrop.cc',
+  'trashmail.com',
+  'trashmail.me',
+  'trashmail.net',
+  '10minutemail.com',
+  '10minutemail.net',
+  'minutemail.com',
+  'fakeinbox.com',
+  'mailnesia.com',
+  'mailcatch.com',
+  'mytemp.email',
+  'tempinbox.com',
+  'discard.email',
+  'discardmail.com',
+  'discardmail.de',
+  'spamgourmet.com',
+  'mailnull.com',
+  'getairmail.com',
+  'mohmal.com',
+  'emailondeck.com',
+  'burnermail.io',
+  'inboxkitten.com',
+  'tmpmail.net',
+  'tmpmail.org',
+  'fakemailgenerator.com',
+  'mailforspam.com',
+  'spambox.us',
+  'mailtothis.com',
+  'spamfree24.org',
+  'jetable.org',
+  'mailtemp.info',
+]);
+
+export function isDisposableEmailDomain(email: string): boolean {
+  const domain = email.split('@')[1]?.toLowerCase();
+  if (!domain) return false;
+  return DISPOSABLE_EMAIL_DOMAINS.has(domain);
+}

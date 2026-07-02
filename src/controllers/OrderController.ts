@@ -1,4 +1,5 @@
-import { Request, Response, Router } from 'express';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import {
   cancelOrder,
   createOrder,
@@ -10,12 +11,14 @@ import {
   getOrdersByShopOwner,
   updateOrderStatus,
 } from '../services/OrderService';
-import { IdParams } from '@/models/generic/Routes';
+import type { IdParams } from '@/models/generic/Routes';
 import { requireAuth, requireRole, requireActiveUser } from '@/middlewares/isAuthenticated';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { HttpError } from '@/middlewares/errorHandler';
 import { Types } from 'mongoose';
 import { Shop } from '@/schemas/ShopSchema';
+import { validate } from '@/middlewares/validate';
+import { orderListQuerySchema } from '@/validations/orderValidation';
 
 const router = Router();
 
@@ -64,6 +67,7 @@ router.get(
   '/admin',
   requireAuth,
   requireRole(['admin']),
+  validate(orderListQuerySchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const { status, customerId, shopId, page, limit, sort, search } = req.query;
     const orders = await getAllOrders({
@@ -164,6 +168,7 @@ router.get(
   '/shop/orders',
   requireAuth,
   requireRole(['shopOwner', 'admin']),
+  validate(orderListQuerySchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const ownerId = req.user!._id.toString();
     const { status, sort, search, page, limit } = req.query;

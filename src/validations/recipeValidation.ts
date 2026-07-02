@@ -9,9 +9,10 @@ import {
 import { jsonString } from '@/utils/helpers';
 import { Types } from 'mongoose';
 import { z } from 'zod';
+import { objectIdSchema, plainText, richText, searchQueryString } from './common';
 
 const ingredientSchema = z.object({
-  label: z.string().min(1).max(100),
+  label: plainText(1, 100),
   value: z.number().positive(),
   unit: z.enum(INGREDIENT_UNITS),
   linkedProductId: z
@@ -40,12 +41,12 @@ const nutritionPerPortionSchema = z.object({
 
 const instructionSchema = z.object({
   stepNumber: z.number().int().min(1),
-  description: z.string().min(1).max(1000),
+  description: richText(1, 1000),
 });
 
 export const createRecipeSchema = z.object({
-  title: z.string().min(3).max(200),
-  shortDescription: z.string().min(10).max(1000),
+  title: plainText(3, 200),
+  shortDescription: richText(10, 1000),
   ingredients: jsonString(z.array(ingredientSchema).min(1)),
   instructions: jsonString(z.array(instructionSchema).min(1)),
   mealType: z.enum(MEAL_TYPES),
@@ -66,12 +67,26 @@ export const updateRecipeSchema = createRecipeSchema.partial().extend({
 });
 
 export const recipeIdParamSchema = z.object({
-  id: z.string().refine(Types.ObjectId.isValid, 'recipe.invalidId'),
+  id: objectIdSchema,
 });
 
 export const shopRecipeSchema = z.object({
   ingredients: z
-    .array(z.string())
+    .array(plainText(1, 100))
     .min(1, 'recipe.ingredientsRequired')
     .max(30, 'recipe.tooManyIngredients'),
+});
+
+export const recipeListQuerySchema = z.object({
+  q: searchQueryString.optional(),
+  mealType: z.enum(MEAL_TYPES).optional(),
+  difficulty: z.enum(DIFFICULTIES).optional(),
+  dietaryTag: z.string().trim().max(50).optional(),
+  dietaryTags: z.union([z.string(), z.array(z.string())]).optional(),
+  authorId: objectIdSchema.optional(),
+  isPublished: z.enum(['true', 'false']).optional(),
+  minRating: z.coerce.number().min(0).max(5).optional(),
+  sort: z.enum(['new', 'rating', 'duration']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
 });

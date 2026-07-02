@@ -23,8 +23,8 @@ export const jsonString = (schema: z.ZodTypeAny) =>
   }, schema);
 
 /**
- * Manual HTML escaping to avoid external dependencies.
- * Converts characters to HTML entities to prevent basic XSS.
+ * Manual HTML escaping — prefer sanitizePlainText from @/utils/sanitize for new code.
+ * @deprecated Use sanitizePlainText instead.
  */
 export const escapeHtml = (str: string): string => {
   const map: Record<string, string> = {

@@ -1,13 +1,11 @@
 import mongoose, { Types } from 'mongoose';
 import { HttpError } from '@/middlewares/errorHandler';
-import { IReview } from '../models/IReview';
+import type { IReview } from '../models/IReview';
 import { Review } from '../schemas/ReviewSchema';
 import { Product } from '../schemas/ProductSchema';
 import { Shop } from '../schemas/ShopSchema';
 import { Recipe } from '../schemas/RecipeSchema';
 import { User } from '@/schemas/UserSchema';
-import { escapeHtml } from '@/utils/helpers';
-
 /**
  * Recalculates and updates the averageRating and reviewCount for a target entity (Product, Shop, or Recipe).
  * This ensures that denormalized fields stay in sync without requiring expensive aggregations on reads.
@@ -116,13 +114,10 @@ export const createReview = async (
     throw new HttpError(409, 'review.alreadyExists');
   }
 
-  const sanitizedComment = data.comment ? escapeHtml(data.comment.trim()) : null;
-
   // 3. Create and save the review
   const review = new Review({
     ...data,
     authorId,
-    comment: sanitizedComment,
     isVerifiedPurchase: eligibility.isVerifiedPurchase,
   });
 

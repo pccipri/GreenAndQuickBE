@@ -3,7 +3,9 @@ import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { Recipe } from '@/schemas/RecipeSchema';
 import { Product } from '@/schemas/ProductSchema';
 import { productService } from '@/services/ProductService';
-import { SortOrder, Types } from 'mongoose';
+import mongoose from 'mongoose';
+import type { SortOrder } from 'mongoose';
+import { Types } from 'mongoose';
 
 type ListQuery = {
   q?: string;
@@ -11,8 +13,6 @@ type ListQuery = {
   difficulty?: string;
   dietaryTag?: string; // single dietary tag filter
   dietaryTags?: string[]; // multiple dietary tags (any match)
-  tag?: string; // backward compatibility single tag filter
-  tags?: string[]; // backward compatibility multiple tags (any match)
   authorId?: string;
   isPublished?: string; // "true" | "false"
   minRating?: string;
@@ -23,31 +23,43 @@ type ListQuery = {
 
 export const recipeService = {
   async create(authorId: string, payload: any) {
-    // validate linked product ids if present
-    if (Array.isArray(payload.ingredients)) {
-      const ids = payload.ingredients
-        .map((i: any) => i.linkedProductId)
-        .filter(Boolean)
-        .map(String);
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-      for (const id of ids) {
-        if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
-        const exists = await Product.exists({ _id: id });
-        if (!exists) throw new HttpError(404, 'product.notFound');
+    try {
+      // validate linked product ids if present
+      if (Array.isArray(payload.ingredients)) {
+        const ids = payload.ingredients
+          .map((i: any) => i.linkedProductId)
+          .filter(Boolean)
+          .map(String);
+
+        for (const id of ids) {
+          if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
+          const exists = await Product.exists({ _id: id }).session(session);
+          if (!exists) throw new HttpError(404, 'product.notFound');
+        }
       }
+
+      const [created] = await Recipe.create(
+        [{ ...payload, authorId: new Types.ObjectId(authorId) }],
+        { session },
+      );
+
+      const doc = await Recipe.findById(created._id)
+        .populate('authorId', 'firstName lastName avatarPath')
+        .populate('ingredients.linkedProductId', 'name price shopId')
+        .session(session)
+        .lean();
+
+      await session.commitTransaction();
+      return toRecipeDto(doc);
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    const created = await Recipe.create({
-      ...payload,
-      authorId: new Types.ObjectId(authorId),
-    });
-
-    const doc = await Recipe.findById(created._id)
-      .populate('authorId', 'firstName lastName avatarPath')
-      .populate('ingredients.linkedProductId', 'name price shopId')
-      .lean();
-
-    return toRecipeDto(doc);
   },
 
   async getById(requesterId: string | null, id: string) {
@@ -81,38 +93,49 @@ export const recipeService = {
   async update(id: string, payload: any, requesterId: string, isAdmin: boolean) {
     if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'Invalid recipe id');
 
-    const filter: any = { _id: id };
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    if (!isAdmin) {
-      filter.authorId = new Types.ObjectId(requesterId);
-    }
+    try {
+      const filter: any = { _id: id };
 
-    // validate linked product ids if present
-    if (Array.isArray(payload.ingredients)) {
-      const ids = payload.ingredients
-        .map((i: any) => i.linkedProductId)
-        .filter(Boolean)
-        .map(String);
-
-      for (const id of ids) {
-        if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
-        const exists = await Product.exists({ _id: id });
-        if (!exists) throw new HttpError(404, 'product.notFound');
+      if (!isAdmin) {
+        filter.authorId = new Types.ObjectId(requesterId);
       }
+
+      // validate linked product ids if present
+      if (Array.isArray(payload.ingredients)) {
+        const ids = payload.ingredients
+          .map((i: any) => i.linkedProductId)
+          .filter(Boolean)
+          .map(String);
+
+        for (const id of ids) {
+          if (!Types.ObjectId.isValid(id)) throw new HttpError(400, 'recipe.invalidProductId');
+          const exists = await Product.exists({ _id: id }).session(session);
+          if (!exists) throw new HttpError(404, 'product.notFound');
+        }
+      }
+
+      const recipe = await Recipe.findOneAndUpdate(
+        filter,
+        { $set: payload },
+        { new: true, runValidators: true, session },
+      )
+        .populate('authorId', 'firstName lastName avatarPath')
+        .populate('ingredients.linkedProductId', 'name price shopId')
+        .lean();
+
+      if (!recipe) throw new HttpError(404, 'recipe.notFound');
+
+      await session.commitTransaction();
+      return toRecipeDto(recipe);
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
-
-    const recipe = await Recipe.findOneAndUpdate(
-      filter,
-      { $set: payload },
-      { new: true, runValidators: true },
-    )
-      .populate('authorId', 'firstName lastName avatarPath')
-      .populate('ingredients.linkedProductId', 'name price shopId')
-      .lean();
-
-    if (!recipe) throw new HttpError(404, 'recipe.notFound');
-
-    return toRecipeDto(recipe);
   },
 
   async remove(id: string, requesterId: string, isAdmin: boolean) {
@@ -173,8 +196,6 @@ export const recipeService = {
 
     addQueryTags(query.dietaryTag);
     addQueryTags(query.dietaryTags as any);
-    addQueryTags(query.tag);
-    addQueryTags(query.tags as any);
 
     if (dietaryTags.length > 0) filter.dietaryTags = { $in: dietaryTags };
 

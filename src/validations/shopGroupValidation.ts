@@ -1,19 +1,17 @@
 import { z } from 'zod';
+import { optionalRichText, plainText } from './common';
 
 const pickupAddressSchema = z.object({
-  street: z.string().min(1, 'validation.address.streetRequired'),
-  city: z.string().min(1, 'validation.address.cityRequired'),
-  county: z.string().min(1, 'validation.address.countyRequired'),
-  country: z.string().min(1, 'validation.address.countryRequired'),
-  zipcode: z.string().min(1, 'validation.address.zipcodeRequired'),
+  street: plainText(1, 200),
+  city: plainText(1, 100),
+  county: plainText(1, 100),
+  country: plainText(1, 100),
+  zipcode: plainText(1, 20),
 });
 
 export const createGroupSchema = z.object({
-  name: z
-    .string()
-    .min(3, 'validation.group.nameMinLength')
-    .max(50, 'validation.group.nameMaxLength'),
-  description: z.string().max(1000, 'validation.group.descriptionMaxLength').optional().nullable(),
+  name: plainText(3, 50),
+  description: optionalRichText(1000),
   pickupAddress: pickupAddressSchema,
 });
 

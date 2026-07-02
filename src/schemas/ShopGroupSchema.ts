@@ -1,6 +1,7 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import type { Document, Types } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import { baseAddressSchema } from './IBaseAddressSchema';
-import { IBaseAddress } from '@/models/IBaseAddress';
+import type { IBaseAddress } from '@/models/IBaseAddress';
 
 export interface ShopGroupDocument extends Document {
   name: string;
@@ -17,7 +18,7 @@ export interface ShopGroupDocument extends Document {
 const shopGroupSchema = new Schema<ShopGroupDocument>(
   {
     name: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    slug: { type: String, required: true, index: true, unique: true },
     description: { type: String, default: null },
     ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     shops: [{ type: Schema.Types.ObjectId, ref: 'Shop', required: true }],
@@ -27,7 +28,6 @@ const shopGroupSchema = new Schema<ShopGroupDocument>(
   { timestamps: true },
 );
 
-shopGroupSchema.index({ slug: 1 });
 shopGroupSchema.index({ shops: 1, isActive: 1 });
 shopGroupSchema.index({ isActive: 1 });
 shopGroupSchema.index({ name: 'text', description: 'text' });

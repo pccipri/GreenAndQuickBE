@@ -1,17 +1,17 @@
 import express from 'express';
 import passport from 'passport';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import { IVerifyOptions } from 'passport-local';
+import type { IVerifyOptions } from 'passport-local';
 import { requireAuth } from '../middlewares/isAuthenticated';
 import { createRefreshToken, generateAccessToken, rotateRefreshToken } from '../utils/tokens';
 import { RefreshToken } from '../schemas/RefreshTokenSchema';
-import { ICreateUserDTO, IUser } from '../models/IUser';
+import type { ICreateUserDTO, IUser } from '../models/IUser';
 import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
-import { TokenParams } from '@/models/generic/Routes';
+import type { TokenParams } from '@/models/generic/Routes';
 import { configEnvs } from '@/config/env';
 import {
   createUser,
@@ -22,40 +22,51 @@ import {
 import { toUserDto } from '../presenters/UserPresenter';
 import { upload } from '@/middlewares/upload';
 import { uploadPublicImage } from '@/services/PublicImageStorageService';
+import { validate } from '@/middlewares/validate';
+import {
+  passwordResetRequestSchema,
+  registerSchema,
+  updateProfileSchema,
+} from '@/validations/authValidation';
 
 const router = express.Router();
 
-router.post('/register', upload.single('avatar'), async (req: Request, res: Response) => {
-  try {
-    const { preferredLanguage, ...userData } = req.body as any;
-    const user: ICreateUserDTO = { ...userData };
+router.post(
+  '/register',
+  upload.single('avatar'),
+  validate(registerSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { preferredLanguage, ...userData } = req.body as any;
+      const user: ICreateUserDTO = { ...userData };
 
-    const userId = await createUser(user, preferredLanguage);
+      const userId = await createUser(user, preferredLanguage);
 
-    if (req.file) {
-      const uploadedAvatar = await uploadPublicImage({
-        file: req.file.buffer,
-        mimeType: req.file.mimetype,
-        originalFilename: req.file.originalname,
-        folder: `users/${userId}/avatar`,
+      if (req.file) {
+        const uploadedAvatar = await uploadPublicImage({
+          file: req.file.buffer,
+          mimeType: req.file.mimetype,
+          originalFilename: req.file.originalname,
+          folder: `users/${userId}/avatar`,
+        });
+
+        user.avatarPath = uploadedAvatar.path;
+        // Note: If you need the avatar path persisted, ensure createUser handles it or update the user here.
+      }
+
+      res.status(201).json({
+        id: userId,
+        message: 'auth.registrationSuccess',
+        preferredLanguage: preferredLanguage || 'en',
       });
-
-      user.avatarPath = uploadedAvatar.path;
-      // Note: If you need the avatar path persisted, ensure createUser handles it or update the user here.
+    } catch (error: any) {
+      res.status(500).json({
+        message: 'auth.registrationFailed',
+        error: error.message,
+      });
     }
-
-    res.status(201).json({
-      id: userId,
-      message: 'auth.registrationSuccess',
-      preferredLanguage: preferredLanguage || 'en',
-    });
-  } catch (error: any) {
-    res.status(500).json({
-      message: 'auth.registrationFailed',
-      error: error.message,
-    });
-  }
-});
+  },
+);
 
 router.post('/login', (req, res, next) => {
   passport.authenticate(
@@ -144,6 +155,7 @@ router.patch(
   '/users/me',
   requireAuth,
   upload.single('avatar'),
+  validate(updateProfileSchema),
   async (req: Request, res: Response) => {
     try {
       const userId = (req.user as any)._id;
@@ -241,15 +253,16 @@ router.get(
     res.redirect(`${configEnvs.SUCCESS_URL_GOOGLE_CALLBACK}/${accessToken}`);
   },
 );
-router.post('/forgot-password', async (req: Request, res: Response) => {
-  const { email } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: 'auth.emailRequired' });
-  }
+router.post(
+  '/forgot-password',
+  validate(passwordResetRequestSchema),
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
 
-  await requestPasswordReset(email);
-  res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
-});
+    await requestPasswordReset(email);
+    res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+  },
+);
 
 router.post('/reset-password', async (req: Request, res: Response) => {
   const { token, password } = req.body;

@@ -38,6 +38,7 @@ export const configEnvs = {
   SMTP_PASS: requireEnv('SMTP_PASS'),
   PASSWORD_RESET_URL: requireEnv('PASSWORD_RESET_URL'),
   FRONTEND_URL: requireEnv('FRONTEND_URL'),
+  BLOCK_DISPOSABLE_EMAILS: requireEnv('BLOCK_DISPOSABLE_EMAILS') === 'true',
   // TO-DO: Investigate the STATIC_DIR variable usage and decide if it should be added here or handled differently
   // STATIC_DIR: requireEnv('STATIC_DIR'),
 };

@@ -24,7 +24,7 @@ passport.use(
         const valid = await isPasswordValid(password, user.password);
         if (!valid) return done(null, false, { message: 'auth.invalidPassword' });
 
-        return done(null, user);
+        return done(null, user as unknown as Express.User);
       } catch (err) {
         return done(err);
       }
@@ -66,7 +66,7 @@ passport.use(
           }
         }
 
-        return done(null, user);
+        return done(null, user as unknown as Express.User);
       } catch (err) {
         return done(err as Error);
       }
@@ -86,7 +86,7 @@ passport.use(
         if (!payload?.sub) return done(null, false);
         const user = await User.findById(payload.sub).select('-password');
         if (!user) return done(null, false);
-        return done(null, user);
+        return done(null, user as unknown as Express.User);
       } catch (err) {
         return done(err, false);
       }

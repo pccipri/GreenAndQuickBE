@@ -1,8 +1,9 @@
 import { recipeService } from '@/services/RecipeService';
 import { HttpError } from '@/middlewares/errorHandler';
 import { requireActiveUser, requireAuth } from '@/middlewares/isAuthenticated';
-import { IdParams, SlugParams } from '@/models/generic/Routes';
-import { Router, Request, Response } from 'express';
+import type { IdParams, SlugParams } from '@/models/generic/Routes';
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import { upload } from '@/middlewares/upload';
 import {
   deletePublicImage,
@@ -19,6 +20,7 @@ import {
   updateRecipeSchema,
   recipeIdParamSchema,
   shopRecipeSchema,
+  recipeListQuerySchema,
 } from '@/validations/recipeValidation';
 
 const router = Router();
@@ -37,6 +39,7 @@ function getUploadFiles(req: Request): MulterFields {
  */
 router.get(
   '/',
+  validate(recipeListQuerySchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const authorId = req.user?._id || null;
     const result = await recipeService.list(authorId, req.query as any);
@@ -82,16 +85,9 @@ router.post(
   validate(createRecipeSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const payload = req.body;
-    if (!payload.dietaryTags && payload.tags) {
-      payload.dietaryTags = payload.tags;
-      delete payload.tags;
-    }
 
     const recipeId = new Types.ObjectId(); // Generate ObjectId upfront
     const files = getUploadFiles(req);
-
-    let uploadedMainImagePath: string | null = null;
-    const uploadedInstructionImagePaths: string[] = [];
 
     // cleanup function to run if recipe creation fails
     const cleanupImages = async () => {
@@ -110,8 +106,7 @@ router.post(
           originalFilename: mainImageFile.originalname,
           folder: `recipes/${recipeId}/main`,
         });
-        uploadedMainImagePath = uploadedMainImage.path; // Store path for cleanup
-        payload.imagePath = uploadedMainImagePath;
+        payload.imagePath = uploadedMainImage.path;
       }
 
       if (Array.isArray(payload.instructions)) {
@@ -132,7 +127,6 @@ router.post(
               originalFilename: imageFile.originalname,
               folder: `recipes/${recipeId}/instructions`,
             });
-            uploadedInstructionImagePaths.push(uploadedInstructionImage.path); // Store path for cleanup
 
             return {
               ...instruction,
@@ -183,10 +177,6 @@ router.patch(
     }
 
     const payload = req.body;
-    if (!payload.dietaryTags && payload.tags) {
-      payload.dietaryTags = payload.tags;
-      delete payload.tags;
-    }
 
     const files = getUploadFiles(req);
 
