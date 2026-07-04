@@ -13,6 +13,10 @@ import './config/i18n'; // Initialize i18n
 
 dotenv.config();
 
+if (configEnvs.NODE_ENV === 'production' && configEnvs.ALLOW_PRODUCTION_SEED === true) {
+  console.warn('WARNING: Production admin seeding override is enabled.');
+}
+
 const app = express();
 
 const corsOptions = {
@@ -43,7 +47,7 @@ app.listen(configEnvs.PORT, () => {
   console.log(`Server is running on port ${configEnvs.PORT}`);
 
   connectToDatabase(
-    `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_DB_NAME}`,
+    `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_APP_NAME}`,
   );
   ensureStorageBuckets().catch((error) => {
     console.error(error);

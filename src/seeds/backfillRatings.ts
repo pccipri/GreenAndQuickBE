@@ -4,6 +4,7 @@ import { Shop } from '../schemas/ShopSchema';
 import { Recipe } from '../schemas/RecipeSchema';
 import { Review } from '../schemas/ReviewSchema';
 import { updateTargetRating } from '../services/ReviewService';
+import { DEFAULT_RATING_VALUE, DEFAULT_REVIEW_COUNT } from '../utils/constants';
 
 /**
  * Migration script for Reviews & Ratings.
@@ -26,15 +27,15 @@ export async function ReviewsAndRatingsMigration() {
     await Promise.all([
       Product.updateMany(
         { averageRating: { $exists: false } },
-        { $set: { averageRating: 0, reviewCount: 0 } },
+        { $set: { averageRating: DEFAULT_RATING_VALUE, reviewCount: DEFAULT_REVIEW_COUNT } },
       ),
       Shop.updateMany(
         { averageRating: { $exists: false } },
-        { $set: { averageRating: 0, reviewCount: 0 } },
+        { $set: { averageRating: DEFAULT_RATING_VALUE, reviewCount: DEFAULT_REVIEW_COUNT } },
       ),
       Recipe.updateMany(
         { averageRating: { $exists: false } },
-        { $set: { averageRating: 0, reviewCount: 0 } },
+        { $set: { averageRating: DEFAULT_RATING_VALUE, reviewCount: DEFAULT_REVIEW_COUNT } },
       ),
     ]);
 

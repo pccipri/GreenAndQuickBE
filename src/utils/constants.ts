@@ -22,6 +22,25 @@ export const DIFFICULTIES = ['EASY', 'MEDIUM', 'HARD'] as const;
 
 export const REVIEW_TARGET_TYPES = ['product', 'shop', 'recipe'] as const;
 
+export const DEFAULT_RATING_VALUE = 0;
+export const DEFAULT_REVIEW_COUNT = 0;
+
+export const DIETARY_TAGS = [
+  'vegan',
+  'vegetarian',
+  'glutenFree',
+  'dairyFree',
+  'halal',
+  'kosher',
+  'lowCalorie',
+] as const;
+
+export const SEED_ADMIN_EMAIL = 'admin@greenquick.com';
+export const SEED_ADMIN_USERNAME = 'admin';
+export const SEED_ADMIN_PASSWORD = 'AdminPassword123!';
+export const SEED_ADMIN_FIRST_NAME = 'System';
+export const SEED_ADMIN_LAST_NAME = 'Admin';
+
 export const NUTRIENT_LABELS = [
   'Energy',
   'Fat',

@@ -9,8 +9,8 @@ async function seedCategories() {
 
   try {
     await mongoose.connect(
-      `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_DB_NAME}`,
-      { dbName: 'Quick_Green' },
+      `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_APP_NAME}`,
+      { dbName: configEnvs.MONGODB_DB_NAME },
     );
     console.log('MongoDB connected for seeding.');
 

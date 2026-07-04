@@ -1,23 +1,14 @@
 import mongoose from 'mongoose';
 import { DietaryTag } from '@/schemas/DietaryTagSchema';
 import { configEnvs } from '@/config/env';
-
-const dietaryTags = [
-  'vegan',
-  'vegetarian',
-  'glutenFree',
-  'dairyFree',
-  'halal',
-  'kosher',
-  'lowCalorie',
-];
+import { DIETARY_TAGS } from '@/utils/constants';
 
 async function seedDietaryTags() {
   try {
     console.log('Connecting to MongoDB...');
     await mongoose.connect(
-      `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_DB_NAME}`,
-      { dbName: 'Quick_Green' },
+      `mongodb+srv://${configEnvs.MONGODB_USERNAME}:${configEnvs.MONGODB_PASSWORD}@cluster0.ry12e.mongodb.net/?retryWrites=true&w=majority&appName=${configEnvs.MONGODB_APP_NAME}`,
+      { dbName: configEnvs.MONGODB_DB_NAME },
     );
 
     console.log('Connected to MongoDB.');
@@ -25,7 +16,7 @@ async function seedDietaryTags() {
     let createdCount = 0;
     let skippedCount = 0;
 
-    for (const key of dietaryTags) {
+    for (const key of DIETARY_TAGS) {
       const normalizedKey = String(key).trim().toLowerCase();
       const existing = await DietaryTag.findOne({ key: normalizedKey });
       if (existing) {

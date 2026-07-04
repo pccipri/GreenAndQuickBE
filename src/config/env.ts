@@ -20,6 +20,7 @@ export const configEnvs = {
   PORT: requireEnv('PORT'),
   MONGODB_USERNAME: requireEnv('MONGODB_USERNAME'),
   MONGODB_PASSWORD: requireEnv('MONGODB_PASSWORD'),
+  MONGODB_APP_NAME: requireEnv('MONGODB_APP_NAME'),
   MONGODB_DB_NAME: requireEnv('MONGODB_DB_NAME'),
   CORS_WHITELIST_URL: requireEnv('CORS_WHITELIST_URL'),
   ENCRYPTION_KEY: requireEnv('ENCRYPTION_KEY'),
@@ -39,6 +40,7 @@ export const configEnvs = {
   PASSWORD_RESET_URL: requireEnv('PASSWORD_RESET_URL'),
   FRONTEND_URL: requireEnv('FRONTEND_URL'),
   BLOCK_DISPOSABLE_EMAILS: requireEnv('BLOCK_DISPOSABLE_EMAILS') === 'true',
+  ALLOW_PRODUCTION_SEED: requireEnv('ALLOW_PRODUCTION_SEED') === 'true',
   // TO-DO: Investigate the STATIC_DIR variable usage and decide if it should be added here or handled differently
   // STATIC_DIR: requireEnv('STATIC_DIR'),
 };
