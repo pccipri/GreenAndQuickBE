@@ -28,11 +28,14 @@ export const DEFAULT_REVIEW_COUNT = 0;
 export const DIETARY_TAGS = [
   'vegan',
   'vegetarian',
-  'glutenFree',
-  'dairyFree',
+  'gluten-free',
+  'dairy-free',
+  'nut-free',
+  'keto',
   'halal',
-  'kosher',
-  'lowCalorie',
+  'post',
+  'high-protein',
+  'low-calorie',
 ] as const;
 
 export const SEED_ADMIN_EMAIL = 'admin@greenquick.com';

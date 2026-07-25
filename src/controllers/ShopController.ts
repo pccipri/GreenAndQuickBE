@@ -4,7 +4,11 @@ import { productService } from '@/services/ProductService';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { requireAuth, requireRole } from '@/middlewares/isAuthenticated';
 import { validate } from '@/middlewares/validate';
-import { createShopSchema, updateShopSchema } from '@/validations/shopValidation';
+import {
+  createShopSchema,
+  shopListQuerySchema,
+  updateShopSchema,
+} from '@/validations/shopValidation';
 import { upload } from '@/middlewares/upload';
 import { Types } from 'mongoose';
 import {
@@ -26,6 +30,7 @@ const router = Router();
  */
 router.get(
   '/',
+  validate(shopListQuerySchema, 'query'),
   asyncHandler(async (req: Request, res: Response) => {
     const result = await shopService.list(req.query as any);
     res.json(result);

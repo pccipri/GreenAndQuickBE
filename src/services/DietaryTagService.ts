@@ -2,16 +2,30 @@ import { DietaryTag } from '@/schemas/DietaryTagSchema';
 import { Recipe } from '@/schemas/RecipeSchema';
 import { HttpError } from '@/middlewares/errorHandler';
 import { Types } from 'mongoose';
+import type { ICreateDietaryTagDTO } from '@/models/IDietaryTag';
+import { MongoServerError } from 'mongodb';
 
 export const dietaryTagService = {
-  async create(payload: any) {
-    const doc = await DietaryTag.create(payload);
-    return {
-      _id: doc._id.toString(),
-      key: doc.key,
-      createdAt: doc.createdAt,
-      updatedAt: doc.updatedAt,
-    };
+  async create(payload: ICreateDietaryTagDTO) {
+    const normalizedKey = payload.key.trim().toLowerCase();
+
+    const existing = await DietaryTag.findOne({ key: normalizedKey }).lean();
+    if (existing) throw new HttpError(409, 'dietaryTag.alreadyExists');
+
+    try {
+      const doc = await DietaryTag.create({ key: normalizedKey });
+      return {
+        _id: doc._id.toString(),
+        key: doc.key,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      };
+    } catch (error) {
+      if (error instanceof MongoServerError && error.code === 11000) {
+        throw new HttpError(409, 'dietaryTag.alreadyExists');
+      }
+      throw error;
+    }
   },
 
   async list() {

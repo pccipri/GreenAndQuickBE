@@ -2,7 +2,10 @@ import { Request, Response, Router } from 'express';
 import { asyncHandler } from '@/middlewares/asyncHandler';
 import { requireAuth, requireRole } from '@/middlewares/isAuthenticated';
 import { validate } from '@/middlewares/validate';
-import { createDietaryTagSchema } from '@/validations/dietaryTagValidation';
+import {
+  createDietaryTagSchema,
+  dietaryTagIdParamSchema,
+} from '@/validations/dietaryTagValidation';
 import { dietaryTagService } from '@/services/DietaryTagService';
 import { IdParams } from '@/models/generic/Routes';
 
@@ -34,6 +37,7 @@ router.delete(
   '/:id',
   requireAuth,
   requireRole(['admin']),
+  validate(dietaryTagIdParamSchema, 'params'),
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const result = await dietaryTagService.remove(req.params.id);
     res.json(result);

@@ -12,14 +12,45 @@ type ListQuery = {
   mealType?: string;
   difficulty?: string;
   dietaryTag?: string; // single dietary tag filter
-  dietaryTags?: string[]; // multiple dietary tags (any match)
+  dietaryTags?: string[] | string; // multiple dietary tags (AND match)
   authorId?: string;
   isPublished?: string; // "true" | "false"
   minRating?: string;
+  maxDuration?: string;
   sort?: string; // "new" | "rating" | "duration"
   page?: string;
   limit?: string;
 };
+
+export function normalizeDietaryTags(value: string | string[] | undefined): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return [
+      ...new Set(
+        value.flatMap((item) =>
+          String(item)
+            .split(',')
+            .map((tag) => tag.trim().toLowerCase())
+            .filter(Boolean),
+        ),
+      ),
+    ];
+  }
+
+  return [
+    ...new Set(
+      String(value)
+        .split(',')
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export function getDurationInMinutes(duration: number, durationType?: string) {
+  if (durationType === 'HOURS') return duration * 60;
+  return duration;
+}
 
 export const recipeService = {
   async create(authorId: string, payload: any) {
@@ -171,37 +202,36 @@ export const recipeService = {
       filter.authorId = new Types.ObjectId(query.authorId);
     }
 
-    const dietaryTags: string[] = [];
-    const addQueryTags = (value: string | string[] | undefined) => {
-      if (!value) return;
-      if (Array.isArray(value)) {
-        value.forEach((tag) => {
-          if (tag)
-            dietaryTags.push(
-              ...tag
-                .split(',')
-                .map((item) => item.trim())
-                .filter(Boolean),
-            );
-        });
-      } else if (typeof value === 'string') {
-        dietaryTags.push(
-          ...value
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean),
-        );
-      }
-    };
+    const dietaryTags = [
+      ...normalizeDietaryTags(query.dietaryTag),
+      ...normalizeDietaryTags(query.dietaryTags as any),
+    ];
 
-    addQueryTags(query.dietaryTag);
-    addQueryTags(query.dietaryTags as any);
-
-    if (dietaryTags.length > 0) filter.dietaryTags = { $in: dietaryTags };
+    if (dietaryTags.length > 0) {
+      filter.dietaryTags = { $all: [...new Set(dietaryTags)] };
+    }
 
     if (query.minRating != null) {
       const mr = Number(query.minRating);
       if (!Number.isNaN(mr)) filter.averageRating = { $gte: mr };
+    }
+
+    if (query.maxDuration != null) {
+      const maxDuration = Number(query.maxDuration);
+      if (!Number.isNaN(maxDuration)) {
+        filter.$expr = {
+          $lte: [
+            {
+              $cond: [
+                { $eq: ['$durationType', 'HOURS'] },
+                { $multiply: ['$duration', 60] },
+                '$duration',
+              ],
+            },
+            maxDuration,
+          ],
+        };
+      }
     }
 
     const mongoQuery = query.q ? { ...filter, $text: { $search: query.q } } : filter;
@@ -209,16 +239,26 @@ export const recipeService = {
 
     const sort: Record<string, SortOrder> =
       query.sort === 'rating'
-        ? { averageRating: -1, reviewCount: -1 }
+        ? { averageRating: -1, reviewCount: -1, createdAt: -1, _id: -1 }
         : query.sort === 'duration'
-          ? { duration: 1, createdAt: -1 }
-          : { createdAt: -1 };
+          ? { duration: 1, createdAt: -1, _id: -1 }
+          : { createdAt: -1, _id: -1 };
 
     findQuery.sort(sort).skip(skip).limit(limit);
 
     if (query.q) {
       findQuery.select({ score: { $meta: 'textScore' } } as any);
-      findQuery.sort({ score: { $meta: 'textScore' } } as any);
+      const textSort =
+        query.sort === 'rating'
+          ? ({
+              score: { $meta: 'textScore' },
+              averageRating: -1,
+              reviewCount: -1,
+              createdAt: -1,
+              _id: -1,
+            } as any)
+          : ({ score: { $meta: 'textScore' }, createdAt: -1, _id: -1 } as any);
+      findQuery.sort(textSort);
     }
 
     const [items, total] = await Promise.all([

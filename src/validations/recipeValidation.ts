@@ -12,8 +12,8 @@ import { z } from 'zod';
 import { objectIdSchema, plainText, richText, searchQueryString } from './common';
 
 const ingredientSchema = z.object({
-  label: plainText(1, 100),
-  value: z.number().positive(),
+  name: plainText(1, 100),
+  quantity: z.number().positive(),
   unit: z.enum(INGREDIENT_UNITS),
   linkedProductId: z
     .string()
@@ -86,6 +86,7 @@ export const recipeListQuerySchema = z.object({
   authorId: objectIdSchema.optional(),
   isPublished: z.enum(['true', 'false']).optional(),
   minRating: z.coerce.number().min(0).max(5).optional(),
+  maxDuration: z.coerce.number().int().min(1).optional(),
   sort: z.enum(['new', 'rating', 'duration']).optional(),
   page: z.coerce.number().int().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),

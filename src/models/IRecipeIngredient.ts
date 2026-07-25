@@ -1,6 +1,6 @@
 export default interface IRecipeIngredient {
-  label: string;
-  value: number;
+  name: string;
+  quantity: number;
   unit: string;
   linkedProductId?: string | null;
 }

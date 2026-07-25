@@ -9,7 +9,7 @@ import { SortOrder, Types } from 'mongoose';
 type ShopListQuery = {
   search?: string;
   category?: string; // category slug
-  sort?: 'newest' | 'popular';
+  sort?: 'newest' | 'popular' | 'rating';
   page?: string;
   limit?: string;
 };
@@ -54,14 +54,26 @@ export const shopService = {
     // Sorting
     const sort: Record<string, SortOrder> =
       query.sort === 'popular'
-        ? { createdAt: -1 } // Placeholder for popular (could be based on product count or orders)
-        : { createdAt: -1 };
+        ? { createdAt: -1, _id: -1 } // Placeholder for popular (could be based on product count or orders)
+        : query.sort === 'rating'
+          ? { averageRating: -1, reviewCount: -1, createdAt: -1, _id: -1 }
+          : { createdAt: -1, _id: -1 };
 
     findQuery.sort(sort).skip(skip).limit(limit);
 
     if (query.search) {
       findQuery.select({ score: { $meta: 'textScore' } } as any);
-      findQuery.sort({ score: { $meta: 'textScore' } } as any);
+      const textSort =
+        query.sort === 'rating'
+          ? ({
+              score: { $meta: 'textScore' },
+              averageRating: -1,
+              reviewCount: -1,
+              createdAt: -1,
+              _id: -1,
+            } as any)
+          : ({ score: { $meta: 'textScore' }, createdAt: -1, _id: -1 } as any);
+      findQuery.sort(textSort);
     }
 
     const [items, total] = await Promise.all([

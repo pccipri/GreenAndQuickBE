@@ -23,7 +23,7 @@ const productSchema = new Schema(
       default: [],
       validate: [(val: string[]) => val.length <= 10, 'product.maxImagesExceeded'],
     }, // Max 10 images
-    price: { type: Number, required: true, min: 0, set: (v: number) => Math.round(v) }, // Store in cents, ensure integer
+    price: { type: Number, required: true, min: 0, index: true, set: (v: number) => Math.round(v) }, // Store in cents, ensure integer
     reducedPrice: {
       type: Number,
       default: null,

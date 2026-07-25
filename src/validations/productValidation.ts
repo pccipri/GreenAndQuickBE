@@ -31,12 +31,24 @@ export const searchProductsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(30).default(10).optional(),
 });
 
-export const productListQuerySchema = z.object({
-  search: searchQueryString.optional(),
-  category: z.string().trim().max(100).optional(),
-  shopId: z.string().refine(Types.ObjectId.isValid, 'product.invalidShopId').optional(),
-  sort: z.enum(['newest', 'price_asc', 'price_desc', 'popular']).optional(),
-  available: z.preprocess((val) => val === 'true', z.boolean()).optional(),
-  page: z.coerce.number().int().min(1).optional(),
-  limit: z.coerce.number().int().min(1).max(50).optional(),
-});
+export const productListQuerySchema = z
+  .object({
+    search: searchQueryString.optional(),
+    category: z.string().trim().max(100).optional(),
+    shopId: z.string().refine(Types.ObjectId.isValid, 'product.invalidShopId').optional(),
+    sort: z.enum(['newest', 'price_asc', 'price_desc', 'popular', 'rating']).optional(),
+    available: z.preprocess((val) => val === 'true', z.boolean()).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(50).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.minPrice != null && data.maxPrice != null && data.minPrice > data.maxPrice) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'product.invalidPriceRange',
+        path: ['maxPrice'],
+      });
+    }
+  });

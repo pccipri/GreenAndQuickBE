@@ -8,8 +8,10 @@ export type ProductListQuery = {
   search?: string;
   category?: string; // slug
   shopId?: string;
-  sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular';
+  sort?: 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
   available?: string | boolean;
+  minPrice?: string | number;
+  maxPrice?: string | number;
   page?: string | number;
   limit?: string | number;
 };
@@ -45,20 +47,48 @@ export const productService = {
       filter.stock = { $gt: 0 };
     }
 
+    if (query.minPrice != null) {
+      const minPrice = Number(query.minPrice);
+      if (!Number.isNaN(minPrice)) {
+        filter.price = { ...(filter.price ?? {}), $gte: minPrice };
+      }
+    }
+
+    if (query.maxPrice != null) {
+      const maxPrice = Number(query.maxPrice);
+      if (!Number.isNaN(maxPrice)) {
+        filter.price = { ...(filter.price ?? {}), $lte: maxPrice };
+      }
+    }
+
     const mongoQuery = query.search ? { ...filter, $text: { $search: query.search } } : filter;
     const findQuery = Product.find(mongoQuery);
 
     // Sorting logic
-    const sort: Record<string, SortOrder> = { createdAt: -1 };
+    const sort: Record<string, SortOrder> = { createdAt: -1, _id: -1 };
     if (query.sort === 'price_asc') sort.price = 1;
     if (query.sort === 'price_desc') sort.price = -1;
+    if (query.sort === 'rating') {
+      sort.averageRating = -1;
+      sort.reviewCount = -1;
+    }
     // "popular" is a placeholder for now, using createdAt
 
     findQuery.sort(sort).skip(skip).limit(limit);
 
     if (query.search) {
       findQuery.select({ score: { $meta: 'textScore' } } as any);
-      findQuery.sort({ score: { $meta: 'textScore' } } as any);
+      const textSort =
+        query.sort === 'rating'
+          ? ({
+              score: { $meta: 'textScore' },
+              averageRating: -1,
+              reviewCount: -1,
+              createdAt: -1,
+              _id: -1,
+            } as any)
+          : ({ score: { $meta: 'textScore' }, createdAt: -1, _id: -1 } as any);
+      findQuery.sort(textSort);
     }
 
     const [items, total] = await Promise.all([

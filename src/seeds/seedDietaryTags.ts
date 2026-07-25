@@ -13,22 +13,27 @@ async function seedDietaryTags() {
 
     console.log('Connected to MongoDB.');
 
-    let createdCount = 0;
-    let skippedCount = 0;
+    const normalizedKeys = [
+      ...new Set(DIETARY_TAGS.map((key) => String(key).trim().toLowerCase())),
+    ];
 
-    for (const key of DIETARY_TAGS) {
-      const normalizedKey = String(key).trim().toLowerCase();
-      const existing = await DietaryTag.findOne({ key: normalizedKey });
-      if (existing) {
-        skippedCount++;
-        console.log(`Dietary tag '${normalizedKey}' already exists. Skipping.`);
-        continue;
-      }
+    const result = await DietaryTag.bulkWrite(
+      normalizedKeys.map((key) => ({
+        updateOne: {
+          filter: { key },
+          update: { $setOnInsert: { key } },
+          upsert: true,
+        },
+      })),
+      { ordered: false },
+    );
 
-      await DietaryTag.create({ key: normalizedKey });
-      createdCount++;
-      console.log(`Created dietary tag '${normalizedKey}'.`);
-    }
+    const createdCount = result.upsertedCount;
+    const skippedCount = normalizedKeys.length - createdCount;
+
+    normalizedKeys.forEach((key) => {
+      console.log(`Dietary tag '${key}' ensured.`);
+    });
 
     console.log(`Dietary tag seeding complete. ${createdCount} created, ${skippedCount} skipped.`);
   } catch (error) {

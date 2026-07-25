@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { plainText, richText } from './common';
+import { plainText, richText, searchQueryString } from './common';
 
 /**
  * Validation schema for Shop creation including CUI.
@@ -27,3 +27,11 @@ export const createShopSchema = z.object({
 });
 
 export const updateShopSchema = createShopSchema.partial();
+
+export const shopListQuerySchema = z.object({
+  search: searchQueryString.optional(),
+  category: z.string().trim().max(100).optional(),
+  sort: z.enum(['newest', 'popular', 'rating']).optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});

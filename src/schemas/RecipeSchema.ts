@@ -14,7 +14,7 @@ import mongoose, { Schema, Types } from 'mongoose';
 const ingredientSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
-    value: { type: Number, required: true },
+    quantity: { type: Number, required: true, min: 0 },
     unit: { type: String, required: true, enum: INGREDIENT_UNITS },
     linkedProductId: { type: Types.ObjectId, ref: 'product', required: false },
   },
@@ -79,7 +79,7 @@ const recipeSchema = new Schema(
     dietaryTags: { type: [String], default: [], index: true },
     servings: { type: Number, required: true, min: 1 },
     nutritionPerPortion: { type: nutritionPerPortionSchema, required: false },
-    duration: { type: Number, required: true, min: 1 },
+    duration: { type: Number, required: true, min: 1, index: true },
     durationType: { type: String, required: true, enum: DURATION_TYPES },
     imagePath: { type: String, default: null },
     nutritionValues: { type: [nutritionValueSchema], required: false, default: undefined },
