@@ -33,7 +33,7 @@ export async function sendVerificationEmail(
   language: string = 'en',
   userName: string = 'there',
 ) {
-  const url = `${configEnvs.FRONTEND_URL}/auth/verifyRegister/${token}`;
+  const url = `${configEnvs.FRONTEND_URL}/verify-email/${token}`;
   const subject = i18next.t('verifySubject', { ns: 'emails', lng: language });
   const body = i18next
     .t('verifyBody', {

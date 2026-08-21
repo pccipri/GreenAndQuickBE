@@ -40,6 +40,52 @@ export const createUser = async (userToSave: ICreateUserDTO, preferredLanguage: 
   return response._id;
 };
 
+export const resendVerificationEmail = async (email: string) => {
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    return {
+      success: false,
+      message: 'user.notFound',
+    };
+  }
+
+  if (user.isActive) {
+    return {
+      success: false,
+      message: 'auth.emailAlreadyVerified',
+    };
+  }
+
+  const userSettings = await UserSettings.findOne({ userId: user._id });
+
+  const language = sanitizeLanguage(userSettings?.preferredLanguage ?? 'en');
+
+  // Invalidate any previous verification links
+  await EmailConfirmationToken.deleteMany({ userId: user._id });
+
+  // Create fresh verification token
+  const { token, hashedToken } = generateVerificationToken();
+
+  await EmailConfirmationToken.create({
+    userId: user._id,
+    tokenHash: hashedToken,
+    expiresAt: new Date(Date.now() + 1 * 60 * 60 * 1000),
+  });
+
+  // Send fresh verification email
+  await sendVerificationEmail(
+    user.email,
+    token,
+    language,
+    user.username ?? user.email,
+  );
+
+  return {
+    success: true,
+  };
+};
+
 export const getAllUsers = async () => {
   const users = await User.find({}, '-password').populate('userSettings');
   return users;

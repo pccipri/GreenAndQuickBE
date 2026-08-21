@@ -13,12 +13,6 @@ import { EmailConfirmationToken } from '../schemas/EmailConfirmationSchema';
 import { User } from '../schemas/UserSchema';
 import type { TokenParams } from '@/models/generic/Routes';
 import { configEnvs } from '@/config/env';
-import {
-  createUser,
-  requestPasswordReset,
-  resetPassword,
-  updateUser,
-} from '../services/UserService';
 import { toUserDto } from '../presenters/UserPresenter';
 import { upload } from '@/middlewares/upload';
 import { uploadPublicImage } from '@/services/PublicImageStorageService';
@@ -28,6 +22,13 @@ import {
   registerSchema,
   updateProfileSchema,
 } from '@/validations/authValidation';
+import {
+  createUser,
+  requestPasswordReset,
+  resendVerificationEmail,
+  resetPassword,
+  updateUser,
+} from '../services/UserService';
 
 const router = express.Router();
 
@@ -67,6 +68,32 @@ router.post(
     }
   },
 );
+
+router.post('/resend-verification', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'auth.emailRequired' });
+    }
+
+    const result = await resendVerificationEmail(email);
+
+    if (!result.success) {
+      return res.status(400).json({ error: result.message });
+    }
+
+    return res.json({
+      message: 'auth.verificationEmailResent',
+    });
+  } catch (error: any) {
+    console.error('Resend verification email error:', error);
+
+    return res.status(500).json({
+      error: 'auth.resendVerificationFailed',
+    });
+  }
+});
 
 router.post('/login', (req, res, next) => {
   passport.authenticate(

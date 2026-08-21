@@ -4,5 +4,11 @@
   "orderDelivered": "Your order has been delivered",
   "paymentReceived": "Payment received successfully",
   "accountVerified": "Your account has been verified",
-  "passwordChanged": "Your password has been changed successfully"
+  "passwordChanged": "Your password has been changed successfully",
+  "auth": {
+    "verificationEmailResent": "A new verification email has been sent.",
+    "emailAlreadyVerified": "Your email address is already verified.",
+    "emailRequired": "Email address is required.",
+    "resendVerificationFailed": "Unable to resend the verification email."
+  }
 }
