@@ -4,5 +4,11 @@
   "orderDelivered": "Comanda ta a fost livrată",
   "paymentReceived": "Plată primită cu succes",
   "accountVerified": "Contul tău a fost verificat",
-  "passwordChanged": "Parola ta a fost schimbată cu succes"
+  "passwordChanged": "Parola ta a fost schimbată cu succes",
+  "auth": {
+    "verificationEmailResent": "Un nou email de verificare a fost trimis.",
+    "emailAlreadyVerified": "Adresa ta de email este deja verificată.",
+    "emailRequired": "Adresa de email este obligatorie.",
+    "resendVerificationFailed": "Emailul de verificare nu a putut fi retrimis."
+  }
 }
