@@ -159,10 +159,22 @@ router.post('/refreshToken', async (req: Request, res: Response) => {
 
 router.post('/logout', async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
+
   if (token) {
-    await RefreshToken.updateOne({ token }, { isValid: false });
-    res.clearCookie('refreshToken');
+    const hashedToken = crypto
+      .createHash('sha256')
+      .update(token)
+      .digest('hex');
+
+    await RefreshToken.deleteOne({ token: hashedToken });
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: configEnvs.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
   }
+
   res.json({ message: 'Logged out' });
 });
 
