@@ -318,4 +318,18 @@ router.post(
   }),
 );
 
+/**
+ * GET /recipes/:id/recommendations
+ * Rule-based recommended recipes for a given recipe (Public)
+ */
+router.get(
+  '/:id/recommendations',
+  validate(recipeIdParamSchema, 'params'),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const requesterId = req.user?._id || null;
+    const result = await recipeService.getRecommendations(req.params.id, requesterId);
+    res.json(result);
+  }),
+);
+
 export default router;

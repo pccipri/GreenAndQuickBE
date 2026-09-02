@@ -1,6 +1,8 @@
 import { Product } from '@/schemas/ProductSchema';
 import { Category } from '@/schemas/CategorySchema';
+import { Recipe } from '@/schemas/RecipeSchema';
 import { toProductDto } from '@/presenters/ProductPresenter';
+import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { HttpError } from '@/middlewares/errorHandler';
 import { SortOrder, Types } from 'mongoose';
 
@@ -137,6 +139,43 @@ export const productService = {
     const deleted = await Product.findByIdAndDelete(id);
     if (!deleted) throw new HttpError(404, 'product.notFound');
     return { ok: true };
+  },
+
+  /**
+   * Published recipes that tag this product as a linked ingredient (Feature 13).
+   */
+  async getRecipesForProduct(productId: string, page?: string | number, limit?: string | number) {
+    if (!Types.ObjectId.isValid(productId)) throw new HttpError(400, 'product.invalidId');
+
+    const exists = await Product.exists({ _id: productId });
+    if (!exists) throw new HttpError(404, 'product.notFound');
+
+    const pageNum = Math.max(1, Number(page ?? 1) || 1);
+    const limitNum = Math.min(50, Math.max(1, Number(limit ?? 20) || 20));
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {
+      'ingredients.linkedProductId': new Types.ObjectId(productId),
+      isPublished: true,
+    };
+
+    const [items, total] = await Promise.all([
+      Recipe.find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .populate('authorId', 'firstName lastName avatarPath')
+        .lean(),
+      Recipe.countDocuments(filter),
+    ]);
+
+    return {
+      items: items.map(toRecipeDto),
+      page: pageNum,
+      limit: limitNum,
+      total,
+      pages: Math.ceil(total / limitNum),
+    };
   },
 
   /**

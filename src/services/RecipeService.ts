@@ -2,10 +2,15 @@ import { HttpError } from '@/middlewares/errorHandler';
 import { toRecipeDto } from '@/presenters/RecipePresenter';
 import { Recipe } from '@/schemas/RecipeSchema';
 import { Product } from '@/schemas/ProductSchema';
+import { Favorite } from '@/schemas/FavoriteSchema';
+import { Review } from '@/schemas/ReviewSchema';
 import { productService } from '@/services/ProductService';
 import mongoose from 'mongoose';
 import type { SortOrder } from 'mongoose';
 import { Types } from 'mongoose';
+
+const RECOMMENDATION_LIMIT = 4;
+const HIGHLY_RATED_THRESHOLD = 4;
 
 type ListQuery = {
   q?: string;
@@ -273,6 +278,82 @@ export const recipeService = {
       total,
       pages: Math.ceil(total / limit),
     };
+  },
+
+  /**
+   * Rule-based recommendations for a recipe (Feature 12) — no ML, derived from mealType/dietaryTags/rating.
+   */
+  async getRecommendations(recipeId: string, requesterId: string | null) {
+    if (!Types.ObjectId.isValid(recipeId)) throw new HttpError(400, 'recipe.invalidId');
+
+    const recipe = await Recipe.findOne({ _id: recipeId, isPublished: true }).lean();
+    if (!recipe) throw new HttpError(404, 'recipe.notFound');
+
+    const excludedIds = new Set<string>([String(recipe._id)]);
+
+    if (requesterId) {
+      const [favorited, reviewed] = await Promise.all([
+        Favorite.find({ userId: requesterId, targetType: 'recipe' }).select('targetId').lean(),
+        Review.find({ targetType: 'recipe', authorId: requesterId }).select('targetId').lean(),
+      ]);
+      favorited.forEach((f: any) => excludedIds.add(String(f.targetId)));
+      reviewed.forEach((r: any) => excludedIds.add(String(r.targetId)));
+    }
+
+    const results: any[] = [];
+    const excludedObjectIds = () => [...excludedIds].map((id) => new Types.ObjectId(id));
+    const dietaryTags = recipe.dietaryTags ?? [];
+
+    // Priority 1: same mealType + at least one overlapping dietary tag
+    if (dietaryTags.length > 0) {
+      const priority1 = await Recipe.find({
+        _id: { $nin: excludedObjectIds() },
+        isPublished: true,
+        mealType: recipe.mealType,
+        dietaryTags: { $in: dietaryTags },
+      })
+        .sort({ averageRating: -1, reviewCount: -1 })
+        .limit(RECOMMENDATION_LIMIT)
+        .populate('authorId', 'firstName lastName avatarPath')
+        .lean();
+
+      results.push(...priority1);
+      priority1.forEach((r: any) => excludedIds.add(String(r._id)));
+    }
+
+    // Priority 2: same mealType + highly rated (fallback)
+    if (results.length < RECOMMENDATION_LIMIT) {
+      const priority2 = await Recipe.find({
+        _id: { $nin: excludedObjectIds() },
+        isPublished: true,
+        mealType: recipe.mealType,
+        averageRating: { $gte: HIGHLY_RATED_THRESHOLD },
+      })
+        .sort({ averageRating: -1, reviewCount: -1 })
+        .limit(RECOMMENDATION_LIMIT - results.length)
+        .populate('authorId', 'firstName lastName avatarPath')
+        .lean();
+
+      results.push(...priority2);
+      priority2.forEach((r: any) => excludedIds.add(String(r._id)));
+    }
+
+    // Priority 3: same mealType, sorted by rating (last resort)
+    if (results.length < RECOMMENDATION_LIMIT) {
+      const priority3 = await Recipe.find({
+        _id: { $nin: excludedObjectIds() },
+        isPublished: true,
+        mealType: recipe.mealType,
+      })
+        .sort({ averageRating: -1, reviewCount: -1 })
+        .limit(RECOMMENDATION_LIMIT - results.length)
+        .populate('authorId', 'firstName lastName avatarPath')
+        .lean();
+
+      results.push(...priority3);
+    }
+
+    return results.slice(0, RECOMMENDATION_LIMIT).map(toRecipeDto);
   },
 
   /**

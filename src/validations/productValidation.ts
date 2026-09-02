@@ -31,6 +31,11 @@ export const searchProductsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(30).default(10).optional(),
 });
 
+export const productRecipesQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional(),
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+});
+
 export const productListQuerySchema = z
   .object({
     search: searchQueryString.optional(),

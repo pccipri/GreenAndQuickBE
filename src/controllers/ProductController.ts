@@ -7,6 +7,7 @@ import {
   updateProductSchema,
   productListQuerySchema,
   searchProductsQuerySchema,
+  productRecipesQuerySchema,
 } from '@/validations/productValidation';
 import { upload } from '@/middlewares/upload';
 import { Types } from 'mongoose';
@@ -61,6 +62,20 @@ router.get(
   asyncHandler(async (req: Request<IdParams>, res: Response) => {
     const product = await productService.getById(req.params.id);
     res.json(product);
+  }),
+);
+
+/**
+ * GET /products/:id/recipes
+ * List published recipes that tag this product as a linked ingredient (Public)
+ */
+router.get(
+  '/:id/recipes',
+  validate(productRecipesQuerySchema, 'query'),
+  asyncHandler(async (req: Request<IdParams>, res: Response) => {
+    const { page, limit } = req.query as any;
+    const result = await productService.getRecipesForProduct(req.params.id, page, limit);
+    res.json(result);
   }),
 );
 
